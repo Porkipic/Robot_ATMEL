@@ -14,6 +14,6 @@
 
 void initADC();
 void startADC(uint8_t analogPinToRead, uint8_t voltageRef);
-uint8_t getADCValue();
+uint16_t getADCValue();
 
 #endif
