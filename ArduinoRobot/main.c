@@ -30,8 +30,8 @@ uint16_t timestampEncLeft		= 0;													// Timestamp B for duration computin
 
 int main (void){
 
-	//DDRD = B11111110; // Set pin direction (1=output, 0=input)
-	//PORTD = B10101000; // Set pin state (1=HIGH, 0=LOW)
+	//DDRD = B11111110; // Set pin direction (1=output, 0=input).
+	//PORTD = B10101000; // Set pin state (1=HIGH, 0=LOW).
 	//DDRD = (1<<PD2); 
 
 	//********** Pins configuration **********
