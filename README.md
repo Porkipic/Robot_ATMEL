@@ -11,7 +11,7 @@ Robot description:
         1 HC-SR04 distance sensor
         1 battery pack (x6 AA batteries)
     Software:
-        Coded in Arduino IDE
+        Coded in ATMEL Studio 7
 
 Notes:
 
