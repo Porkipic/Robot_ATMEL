@@ -1,17 +1,10 @@
-/*
- * ArduinoRobot.c
- *
- * Created: 14/12/2017 20:36:53
- * Author : Antoine
- */ 
-
 #include <avr/io.h>
+#include"util/delay.h"
 
-
-int main(void)
-{
-    /* Replace with your application code */
-    while (1) 
-    {
-    }
-}
+int main (void){ 
+	DDRD = 0xFF;
+	while (1){ 
+		PORTD ^=  0xFF;	//toggle port B
+		_delay_ms(1000);	//wait 1 second 
+	} 
+} 
