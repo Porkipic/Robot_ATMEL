@@ -1,16 +1,17 @@
 ////////////////////////////// INCLUDES ///////////////////////////////////////////
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 ////////////////////////////// END INCLUDES ///////////////////////////////////////
 
 ////////////////////////////// DEFINES ////////////////////////////////////////////
-#define ADC0 0
-#define ADC1 1
-#define ADC2 2
-#define ADC3 3
-#define ADC4 4
-#define ADC5 5
-#define ADCTEMPSENSOR 8
+#define ADC0 0																			// Human-friendly name for ADC channels
+#define ADC1 1																			// 
+#define ADC2 2																			// 
+#define ADC3 3																			// 
+#define ADC4 4																			// 
+#define ADC5 5																			// 
+#define ADCTEMPSENSOR 8																	// In-built temperature sensor on the ADC (convert with internal 1.1v reference)
 ////////////////////////////// END DEFINES ////////////////////////////////////////
 
 ////////////////////////////// ISR FLAGS //////////////////////////////////////////
@@ -44,7 +45,7 @@ volatile uint8_t ISR_SPM		= 0;													// Store Program Memory Ready
 
 ////////////////////////////// CONSTANTS DECLARATION //////////////////////////////
 const uint8_t minSpeed 			= 100;													// Minimum speed value (motors stall under the value). To be determined and adjusted for different motors
-const uint16_t maxSpeed 			= 300;													// Maximum speed value (motors cannot turn faster). To be determined and adjusted for different motors
+const uint16_t maxSpeed 		= 300;													// Maximum speed value (motors cannot turn faster). To be determined and adjusted for different motors
 const uint8_t PIDPeriod			= 100;													// Minimum time between PID computing (max 255 ms)
 const uint16_t kp				= 500;													// P factor used for PID (increase = faster response, worst stability)
 const uint16_t ki				= 25;													// I factor used for PID (increase = faster response, worst stability, eliminate steady-state error)
@@ -71,25 +72,27 @@ uint16_t timestampEncLeft		= 0;													// Timestamp B for duration computin
 ////////////////////////////// ADC //////////////////////////////////////////////
 //********** Initialize ADC **********
 void initADC(){
-	ADCSRA = (1<<ADEN) | (0<<ADATE) | (1<<ADIE) | (7<<ADPS0);
+	ADCSRA |= (1<<ADEN) | (0<<ADATE) | (1<<ADIE) | (7<<ADPS0);
 }
 //********************
 
 //********** Start ADC conversion **********
 void startADC(uint8_t channel){
 	if (channel == 8){
-		ADMUX = (3<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
+		ADMUX |= (3<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
 	}else{
-		ADMUX = (0<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
+		ADMUX |= (1<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
 	}
 	ADCSRA |= (1<<ADSC);
 }
 //********************
 
 //********** Handle ADC **********
-uint16_t handleISR_ADC(){
-	uint16_t result = 0;
-	result = (8<<ADCH) | ADCL;
+uint8_t handleISR_ADC(){
+	uint8_t result = 0;
+	//result = (8<<ADCH) | ADCL;
+	result = ADCL;
+	ISR_ADC = 0;
 	return result;
 }
 //********************
@@ -101,35 +104,39 @@ ISR(ADC_vect){
 //********************
 ////////////////////////////// END ADC //////////////////////////////////////////
 
-////////////////////////////// SETUP /////////////////////////////////////////////
 int main (void){
-
-	//DDRD = B11111110; // Set pin direction (1=output, 0=input).
-	//PORTD = B10101000; // Set pin state (1=HIGH, 0=LOW).
-	//DDRD = (1<<PD2); 
-
+////////////////////////////// SETUP /////////////////////////////////////////////
 	//********** Pins configuration **********
-	DDRB	= 0b00000110;																// Set pin direction (1=OUTPUT, 0=INPUT)
+	DDRB	= 0b00000011;																// Set pin direction (1=OUTPUT, 0=INPUT)
 	PORTB	= 0b00000000;																// Set pin state :
 	DDRC	= 0b00000000;																// - if OUTPUT:	1= HIGH, 		0= LOW
 	PORTC	= 0b00000000;																// - if INPUT:	1= Pullup on,	0= Pullup off
-	DDRD	= 0b11110000;																//
-	PORTD	= 0b00001100;																//
+	DDRD	= 0b11111111;																//
+	PORTD	= 0b00000000;																//
 	//********************
 	
 	//********** Services Initialization **********
-	initADC();
+	//sei();
+	//initADC();
+	//startADC(ADC5);
 	//********************
-////////////////////////////// END SETUP /////////////////////////////////////////	
+////////////////////////////// END SETUP /////////////////////////////////////////
 	while(1) {
 ////////////////////////////// MAIN LOOP /////////////////////////////////////////			
-		
+		//startADC(ADC5);
+		PORTB |= (1<<PINB0);
+		_delay_ms(250);
+		PORTB &= (0<<PINB0);
+		_delay_ms(250);
 		//********** ISR flags checks **********
+		/*
 		if (ISR_ADC){
-			uint16_t ADCValue = handleISR_ADC();
+			uint8_t ADCValue = handleISR_ADC();
+			PORTD = ADCValue;
+			startADC(ADC5);
 		}
+		*/
 		//********************
-		
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////
 	}
 	return 0;
