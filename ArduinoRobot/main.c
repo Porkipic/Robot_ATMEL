@@ -1,9 +1,25 @@
 ////////////////////////////// INCLUDES ///////////////////////////////////////////
 #include <avr/io.h>
+<<<<<<< HEAD
 #include <avr/interrupt.h>
 #include "ADC.h"
 ////////////////////////////// END INCLUDES ///////////////////////////////////////
 
+=======
+#include <avr/interrupts.h>
+////////////////////////////// END INCLUDES ///////////////////////////////////////
+
+////////////////////////////// DEFINES ////////////////////////////////////////////
+#define ADC0 0
+#define ADC1 1
+#define ADC2 2
+#define ADC3 3
+#define ADC4 4
+#define ADC5 5
+#define ADCTEMPSENSOR 8
+////////////////////////////// END DEFINES ////////////////////////////////////////
+
+>>>>>>> 267e5b059353e8252254caaee085ebc459f7f4d5
 ////////////////////////////// ISR FLAGS //////////////////////////////////////////
 volatile uint8_t ISR_RESET		= 0;													// External Pin, Power-on Reset, Brown-out Reset and Watchdog System Reset
 volatile uint8_t ISR_INT0		= 0;													// External Interrupt Request 0
@@ -17,7 +33,11 @@ volatile uint8_t ISR_TMR2CB		= 0;													// Timer/Counter 2 Compare Match B
 volatile uint8_t ISR_TMR2OVF	= 0;													// Timer/Counter 2 Overflow
 volatile uint8_t ISR_TMR1CAPT	= 0;													// Timer/Counter 1 Capture Event
 volatile uint8_t ISR_TMR1CA		= 0;													// Timer/Counter 1 Compare Match A
+<<<<<<< HEAD
 volatile uint8_t ISR_TMR1CB		= 0;													// Timer/Counter 1 Compare Match B
+=======
+volatile uint8_t ISR_TMR1CA		= 0;													// Timer/Counter 1 Compare Match B
+>>>>>>> 267e5b059353e8252254caaee085ebc459f7f4d5
 volatile uint8_t ISR_TMR1OVF	= 0;													// Timer/Counter 1 Overflow
 volatile uint8_t ISR_TMR0CA		= 0;													// Timer/Counter 0 Compare Match A
 volatile uint8_t ISR_TMR0CB		= 0;													// Timer/Counter 0 Compare Match B
@@ -35,7 +55,11 @@ volatile uint8_t ISR_SPM		= 0;													// Store Program Memory Ready
 
 ////////////////////////////// CONSTANTS DECLARATION //////////////////////////////
 const uint8_t minSpeed 			= 100;													// Minimum speed value (motors stall under the value). To be determined and adjusted for different motors
+<<<<<<< HEAD
 const uint16_t maxSpeed 		= 300;													// Maximum speed value (motors cannot turn faster). To be determined and adjusted for different motors
+=======
+const uint8_t maxSpeed 			= 300;													// Maximum speed value (motors cannot turn faster). To be determined and adjusted for different motors
+>>>>>>> 267e5b059353e8252254caaee085ebc459f7f4d5
 const uint8_t PIDPeriod			= 100;													// Minimum time between PID computing (max 255 ms)
 const uint16_t kp				= 500;													// P factor used for PID (increase = faster response, worst stability)
 const uint16_t ki				= 25;													// I factor used for PID (increase = faster response, worst stability, eliminate steady-state error)
@@ -60,6 +84,7 @@ uint16_t timestampEncLeft		= 0;													// Timestamp B for duration computin
 ////////////////////////////// END VARIABLES DECLARATION //////////////////////////
 
 int main (void){
+<<<<<<< HEAD
 ////////////////////////////// SETUP /////////////////////////////////////////////
 	//********** Pins configuration **********
 	DDRB	= 0b00000011;																// Set pin direction (1=OUTPUT, 0=INPUT)
@@ -94,3 +119,74 @@ int main (void){
 	}
 	return 0;
 }
+=======
+
+	//DDRD = B11111110; // Set pin direction (1=output, 0=input).
+	//PORTD = B10101000; // Set pin state (1=HIGH, 0=LOW).
+	//DDRD = (1<<PD2); 
+////////////////////////////// SETUP /////////////////////////////////////////////
+	//********** Pins configuration **********
+	DDRB	= B00000110;																// Set pin direction (1=OUTPUT, 0=INPUT)
+	PORTB	= B00000000;																// Set pin state :
+	DDRC	= B00000000;																// - if OUTPUT:	1= HIGH, 		0= LOW
+	PORTC	= B00000000;																// - if INPUT:	1= Pullup on,	0= Pullup off
+	DDRD	= B11110000;																//
+	PORTD	= B00001100;																//
+	//********************
+    
+	//********** Interrupts **********
+	attachInterrupt(digitalPinToInterrupt(encA), encAISR, CHANGE);						// Interrupt triggered on change on encoders pins
+	attachInterrupt(digitalPinToInterrupt(encB), encBISR, CHANGE);						// Can be changed by RISING to reduce the number of interruptions
+	//********************
+	
+	//********** Services Initialization **********
+	
+	//********************
+////////////////////////////// END SETUP /////////////////////////////////////////	
+	while(1) {
+////////////////////////////// MAIN LOOP /////////////////////////////////////////			
+		
+		//********** ISR flags checks **********
+		if (ISR_ADC){
+			uint16_t ADCValue = handleISR_ADC();
+		}
+		//********************
+		
+////////////////////////////// END MAIN LOOP /////////////////////////////////////
+	}
+	return 0;
+}
+
+////////////////////////////// ADC //////////////////////////////////////////////
+//********** Initialize ADC **********
+void initADC(){
+	ADCSRA = (1<<ADEN) | (0<<ADATE) | (1<<ADIE) | (7<<ADPS0);
+}
+//********************
+
+//********** Start ADC conversion **********
+void startADC(unit8_t channel){
+	if (channel == 8){
+		ADMUX = (3<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
+	}else{
+		ADMUX = (0<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
+	}
+	ADCSRA |= (1<<ADCS);
+}
+//********************
+
+//********** Handle ADC **********
+unint16 handleISR_ADC(){
+	unint16 result = 0;
+	result = (8<<ADCH) | ADCL;
+	return result;
+}
+//********************
+
+//********** ADC ISR **********
+ISR(ADC_vect){
+	ISR_ADC = 1;
+}
+//********************
+////////////////////////////// END ADC //////////////////////////////////////////
+>>>>>>> 267e5b059353e8252254caaee085ebc459f7f4d5
