@@ -513,11 +513,11 @@ END GROUP
  .debug_abbrev  0x000005a2       0xd6 main.o
  .debug_abbrev  0x00000678       0xd1 PersonalLibraries/ADC/ADC.o
 
-.debug_line     0x00000000      0x35f
+.debug_line     0x00000000      0x360
  *(.debug_line .debug_line.* .debug_line_end)
  .debug_line    0x00000000      0x133 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.2.150/gcc/dev/atmega328p/avr5/crtatmega328p.o
- .debug_line    0x00000133      0x111 main.o
- .debug_line    0x00000244      0x11b PersonalLibraries/ADC/ADC.o
+ .debug_line    0x00000133      0x112 main.o
+ .debug_line    0x00000245      0x11b PersonalLibraries/ADC/ADC.o
 
 .debug_frame    0x00000000       0x88
  *(.debug_frame)
