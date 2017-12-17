@@ -1,18 +1,8 @@
 ////////////////////////////// INCLUDES ///////////////////////////////////////////
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
+#include "ADC.h"
 ////////////////////////////// END INCLUDES ///////////////////////////////////////
-
-////////////////////////////// DEFINES ////////////////////////////////////////////
-#define ADC0 0																			// Human-friendly name for ADC channels
-#define ADC1 1																			// 
-#define ADC2 2																			// 
-#define ADC3 3																			// 
-#define ADC4 4																			// 
-#define ADC5 5																			// 
-#define ADCTEMPSENSOR 8																	// In-built temperature sensor on the ADC (convert with internal 1.1v reference)
-////////////////////////////// END DEFINES ////////////////////////////////////////
 
 ////////////////////////////// ISR FLAGS //////////////////////////////////////////
 volatile uint8_t ISR_RESET		= 0;													// External Pin, Power-on Reset, Brown-out Reset and Watchdog System Reset
@@ -69,41 +59,6 @@ uint16_t timestampEncRight		= 0;													// Timestamp A for duration computi
 uint16_t timestampEncLeft		= 0;													// Timestamp B for duration computing
 ////////////////////////////// END VARIABLES DECLARATION //////////////////////////
 
-////////////////////////////// ADC //////////////////////////////////////////////
-//********** Initialize ADC **********
-void initADC(){
-	ADCSRA |= (1<<ADEN) | (0<<ADATE) | (1<<ADIE) | (7<<ADPS0);
-}
-//********************
-
-//********** Start ADC conversion **********
-void startADC(uint8_t channel){
-	if (channel == 8){
-		ADMUX |= (3<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
-	}else{
-		ADMUX |= (1<<REFS0) | (0<<ADLAR) | (channel<<MUX0); 
-	}
-	ADCSRA |= (1<<ADSC);
-}
-//********************
-
-//********** Handle ADC **********
-uint8_t handleISR_ADC(){
-	uint8_t result = 0;
-	//result = (8<<ADCH) | ADCL;
-	result = ADCL;
-	ISR_ADC = 0;
-	return result;
-}
-//********************
-
-//********** ADC ISR **********
-ISR(ADC_vect){
-	ISR_ADC = 1;
-}
-//********************
-////////////////////////////// END ADC //////////////////////////////////////////
-
 int main (void){
 ////////////////////////////// SETUP /////////////////////////////////////////////
 	//********** Pins configuration **********
@@ -116,26 +71,24 @@ int main (void){
 	//********************
 	
 	//********** Services Initialization **********
-	//sei();
-	//initADC();
-	//startADC(ADC5);
+	initADC();
 	//********************
+	
+	sei();																				// Enable Global Interrupts
+	
 ////////////////////////////// END SETUP /////////////////////////////////////////
 	while(1) {
 ////////////////////////////// MAIN LOOP /////////////////////////////////////////			
-		//startADC(ADC5);
-		PORTB |= (1<<PINB0);
-		_delay_ms(250);
-		PORTB &= (0<<PINB0);
-		_delay_ms(250);
-		//********** ISR flags checks **********
-		/*
-		if (ISR_ADC){
-			uint8_t ADCValue = handleISR_ADC();
-			PORTD = ADCValue;
+		if (!(PINB & (1 << PINB2))){
 			startADC(ADC5);
 		}
-		*/
+		//********** ISR flags checks **********
+		if (ISR_ADC){
+			uint16_t ADCValue = 0;
+			ADCValue = handleConversion();
+			PORTD = ADCValue;
+			PORTB = ((ADCValue>>8)|0x04);
+		}
 		//********************
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////
 	}

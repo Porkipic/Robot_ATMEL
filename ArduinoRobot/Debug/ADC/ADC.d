@@ -1,1 +1,0 @@
-ADC/ADC.d ADC/ADC.o: ../ADC/ADC.c
