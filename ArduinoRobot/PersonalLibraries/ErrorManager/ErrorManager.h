@@ -1,0 +1,12 @@
+#ifndef ERRORMANAGER_H_
+#define ERRORMANAGER_H_
+
+////////////////////////////// INCLUDES ////////////////////////////////////////////
+#include <avr/io.h>
+////////////////////////////// END INCLUDES ////////////////////////////////////////
+
+void initErrorPin(uint8_t errorPin);
+void setError(uint8_t errorCode);
+void clearError();
+
+#endif

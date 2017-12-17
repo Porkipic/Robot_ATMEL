@@ -6,3 +6,5 @@ main.c
 
 PersonalLibraries\ADC\ADC.c
 
+PersonalLibraries\ErrorManager\ErrorManager.c
+

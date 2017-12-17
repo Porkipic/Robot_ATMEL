@@ -10,8 +10,12 @@ void initADC(){
 
 //********** Start ADC conversion **********
 void startADC(uint8_t channel){
-	ADMUX = (1 << REFS0) | (channel << MUX0);
-	ADCSRA |= (1 << ADSC);
+	if (ISR_ADC){
+		setError(1);
+	}else{
+		ADMUX = (1 << REFS0) | (channel << MUX0);
+		ADCSRA |= (1 << ADSC);
+	}
 }
 //********************
 

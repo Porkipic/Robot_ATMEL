@@ -4,16 +4,6 @@
 #include "ADC.h"
 ////////////////////////////// END INCLUDES ///////////////////////////////////////
 
-////////////////////////////// DEFINES ////////////////////////////////////////////
-#define ADC0 0
-#define ADC1 1
-#define ADC2 2
-#define ADC3 3
-#define ADC4 4
-#define ADC5 5
-#define ADCTEMPSENSOR 8
-////////////////////////////// END DEFINES ////////////////////////////////////////
-
 ////////////////////////////// ISR FLAGS //////////////////////////////////////////
 volatile uint8_t ISR_RESET		= 0;													// External Pin, Power-on Reset, Brown-out Reset and Watchdog System Reset
 volatile uint8_t ISR_INT0		= 0;													// External Interrupt Request 0
@@ -73,7 +63,7 @@ int main (void){
 ////////////////////////////// SETUP /////////////////////////////////////////////
 	//********** Pins configuration **********
 	DDRB	= 0b00000011;																// Set pin direction (1=OUTPUT, 0=INPUT)
-	PORTB	= 0b00000000;																// Set pin state :
+	PORTB	= 0b00000100;																// Set pin state :
 	DDRC	= 0b00000000;																// - if OUTPUT:	1= HIGH, 		0= LOW
 	PORTC	= 0b00000000;																// - if INPUT:	1= Pullup on,	0= Pullup off
 	DDRD	= 0b11111111;																//
@@ -82,22 +72,24 @@ int main (void){
 	
 	//********** Services Initialization **********
 	initADC();
+	initErrorPin(18);
 	//********************
-	
-	sei();																				// Enable Global Interrupts
-	
+	setError(2);
+	sei();																				// Enable Global Interrupt
 ////////////////////////////// END SETUP /////////////////////////////////////////
 	while(1) {
-////////////////////////////// MAIN LOOP /////////////////////////////////////////			
+////////////////////////////// MAIN LOOP /////////////////////////////////////////		
+		
 		if (!(PINB & (1 << PINB2))){
 			startADC(ADC5);
+			clearError();
 		}
 		//********** ISR flags checks **********
 		if (ISR_ADC){
 			uint16_t ADCValue = 0;
 			ADCValue = handleConversion();
 			PORTD = ADCValue;
-			PORTB = ((ADCValue>>8)|0x04);
+			PORTB = (ADCValue>>8)|0x04);
 		}
 		//********************
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////
