@@ -20,7 +20,7 @@ void startADC(uint8_t channel){
 //********************
 
 //********** Handle ADC **********
-uint16_t handleConversion(){
+uint16_t getADCValue(){
 	uint16_t result = ADC;
 	ISR_ADC = 0;
 	return result;

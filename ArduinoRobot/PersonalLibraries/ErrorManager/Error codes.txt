@@ -1,0 +1,4 @@
+0	Error in Main Program
+1	Error in ADC
+2	Error in Error Manager
+3	Error in PWM

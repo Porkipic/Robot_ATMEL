@@ -56,7 +56,7 @@ void clearError(){
 			PORTD &= (0<<pin);
 			break;
 		case 2:
-			//PORTB &= (0<<pin);
+			PORTB &= (0<<pin);
 			break;
 		case 3:
 			PORTC &= (0<<pin);

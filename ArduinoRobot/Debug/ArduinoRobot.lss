@@ -3,31 +3,31 @@ ArduinoRobot.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         00000002  00800100  00000292  00000326  2**0
+  0 .data         00000002  00800100  00000296  0000032a  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         00000292  00000000  00000000  00000094  2**1
+  1 .text         00000296  00000000  00000000  00000094  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          00000003  00800102  00800102  00000328  2**0
+  2 .bss          00000003  00800102  00800102  0000032c  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  00000328  2**0
+  3 .comment      00000030  00000000  00000000  0000032c  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000358  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  0000035c  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 00000088  00000000  00000000  00000398  2**0
+  5 .debug_aranges 00000088  00000000  00000000  0000039c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00000d3c  00000000  00000000  00000420  2**0
+  6 .debug_info   00000d3c  00000000  00000000  00000424  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 0000083f  00000000  00000000  0000115c  2**0
+  7 .debug_abbrev 0000083f  00000000  00000000  00001160  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   0000059b  00000000  00000000  0000199b  2**0
+  8 .debug_line   000005a7  00000000  00000000  0000199f  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  000000cc  00000000  00000000  00001f38  2**2
+  9 .debug_frame  000000cc  00000000  00000000  00001f48  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    00000655  00000000  00000000  00002004  2**0
+ 10 .debug_str    00000655  00000000  00000000  00002014  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000180  00000000  00000000  00002659  2**0
+ 11 .debug_loc    00000191  00000000  00000000  00002669  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000058  00000000  00000000  000027d9  2**0
+ 12 .debug_ranges 00000058  00000000  00000000  000027fa  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -54,7 +54,7 @@ Disassembly of section .text:
   48:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
   4c:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
   50:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
-  54:	0c 94 98 00 	jmp	0x130	; 0x130 <__vector_21>
+  54:	0c 94 97 00 	jmp	0x12e	; 0x12e <__vector_21>
   58:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
   5c:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
   60:	0c 94 51 00 	jmp	0xa2	; 0xa2 <__bad_interrupt>
@@ -72,7 +72,7 @@ Disassembly of section .text:
   74:	11 e0       	ldi	r17, 0x01	; 1
   76:	a0 e0       	ldi	r26, 0x00	; 0
   78:	b1 e0       	ldi	r27, 0x01	; 1
-  7a:	e2 e9       	ldi	r30, 0x92	; 146
+  7a:	e6 e9       	ldi	r30, 0x96	; 150
   7c:	f2 e0       	ldi	r31, 0x02	; 2
   7e:	02 c0       	rjmp	.+4      	; 0x84 <__do_copy_data+0x10>
   80:	05 90       	lpm	r0, Z+
@@ -95,7 +95,7 @@ Disassembly of section .text:
   96:	b2 07       	cpc	r27, r18
   98:	e1 f7       	brne	.-8      	; 0x92 <.do_clear_bss_loop>
   9a:	0e 94 53 00 	call	0xa6	; 0xa6 <main>
-  9e:	0c 94 47 01 	jmp	0x28e	; 0x28e <_exit>
+  9e:	0c 94 49 01 	jmp	0x292	; 0x292 <_exit>
 
 000000a2 <__bad_interrupt>:
   a2:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
@@ -112,344 +112,346 @@ int main (void){
 	PORTB	= 0b00000100;																// Set pin state :
   aa:	84 e0       	ldi	r24, 0x04	; 4
   ac:	85 b9       	out	0x05, r24	; 5
-	DDRC	= 0b00000000;																// - if OUTPUT:	1= HIGH, 		0= LOW
-  ae:	17 b8       	out	0x07, r1	; 7
+	DDRC	= 0b00000001;																// - if OUTPUT:	1= HIGH, 		0= LOW
+  ae:	81 e0       	ldi	r24, 0x01	; 1
+  b0:	87 b9       	out	0x07, r24	; 7
 	PORTC	= 0b00000000;																// - if INPUT:	1= Pullup on,	0= Pullup off
-  b0:	18 b8       	out	0x08, r1	; 8
+  b2:	18 b8       	out	0x08, r1	; 8
 	DDRD	= 0b11111111;																//
-  b2:	8f ef       	ldi	r24, 0xFF	; 255
-  b4:	8a b9       	out	0x0a, r24	; 10
+  b4:	8f ef       	ldi	r24, 0xFF	; 255
+  b6:	8a b9       	out	0x0a, r24	; 10
 	PORTD	= 0b00000000;																//
-  b6:	1b b8       	out	0x0b, r1	; 11
+  b8:	1b b8       	out	0x0b, r1	; 11
 	//********************
 	
 	//********** Services Initialization **********
 	initADC();
-  b8:	0e 94 7a 00 	call	0xf4	; 0xf4 <initADC>
-	initErrorPin(18);
-  bc:	82 e1       	ldi	r24, 0x12	; 18
-  be:	0e 94 a7 00 	call	0x14e	; 0x14e <initErrorPin>
+  ba:	0e 94 79 00 	call	0xf2	; 0xf2 <initADC>
+	initErrorPin(23);
+  be:	87 e1       	ldi	r24, 0x17	; 23
+  c0:	0e 94 a6 00 	call	0x14c	; 0x14c <initErrorPin>
 	//********************
 	setError(2);
-  c2:	82 e0       	ldi	r24, 0x02	; 2
-  c4:	0e 94 e4 00 	call	0x1c8	; 0x1c8 <setError>
+  c4:	82 e0       	ldi	r24, 0x02	; 2
+  c6:	0e 94 e3 00 	call	0x1c6	; 0x1c6 <setError>
 	sei();																				// Enable Global Interrupt
-  c8:	78 94       	sei
+  ca:	78 94       	sei
 ////////////////////////////// END SETUP /////////////////////////////////////////
 	while(1) {
 ////////////////////////////// MAIN LOOP /////////////////////////////////////////		
 		
 		if (!(PINB & (1 << PINB2))){
-  ca:	1a 99       	sbic	0x03, 2	; 3
-  cc:	05 c0       	rjmp	.+10     	; 0xd8 <main+0x32>
+  cc:	1a 99       	sbic	0x03, 2	; 3
+  ce:	05 c0       	rjmp	.+10     	; 0xda <main+0x34>
 			startADC(ADC5);
-  ce:	85 e0       	ldi	r24, 0x05	; 5
-  d0:	0e 94 80 00 	call	0x100	; 0x100 <startADC>
+  d0:	85 e0       	ldi	r24, 0x05	; 5
+  d2:	0e 94 7f 00 	call	0xfe	; 0xfe <startADC>
 			clearError();
-  d4:	0e 94 27 01 	call	0x24e	; 0x24e <clearError>
+  d6:	0e 94 26 01 	call	0x24c	; 0x24c <clearError>
 		}
 		//********** ISR flags checks **********
 		if (ISR_ADC){
-  d8:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <__data_end>
-  dc:	88 23       	and	r24, r24
-  de:	a9 f3       	breq	.-22     	; 0xca <main+0x24>
+  da:	80 91 02 01 	lds	r24, 0x0102	; 0x800102 <__data_end>
+  de:	88 23       	and	r24, r24
+  e0:	a9 f3       	breq	.-22     	; 0xcc <main+0x26>
 			uint16_t ADCValue = 0;
 			ADCValue = handleConversion();
-  e0:	0e 94 91 00 	call	0x122	; 0x122 <handleConversion>
-			PORTD = PORTD & ADCValue;
-  e4:	2b b1       	in	r18, 0x0b	; 11
-  e6:	82 23       	and	r24, r18
+  e2:	0e 94 90 00 	call	0x120	; 0x120 <handleConversion>
+			PORTD = (PORTB & 0x00) | ADCValue;
+  e6:	25 b1       	in	r18, 0x05	; 5
   e8:	8b b9       	out	0x0b, r24	; 11
-			PORTB = PORTB & ((ADCValue>>8)|0x04);
+			PORTB = (PORTB & 0x00) | ((ADCValue>>8) | 0xFC);
   ea:	85 b1       	in	r24, 0x05	; 5
-  ec:	94 60       	ori	r25, 0x04	; 4
-  ee:	89 23       	and	r24, r25
-  f0:	85 b9       	out	0x05, r24	; 5
-  f2:	eb cf       	rjmp	.-42     	; 0xca <main+0x24>
+  ec:	9c 6f       	ori	r25, 0xFC	; 252
+  ee:	95 b9       	out	0x05, r25	; 5
+  f0:	ed cf       	rjmp	.-38     	; 0xcc <main+0x26>
 
-000000f4 <initADC>:
+000000f2 <initADC>:
 #include "ADC.h"
 
 ////////////////////////////// ADC //////////////////////////////////////////////
 //********** Initialize ADC **********
 void initADC(){
 	ISR_ADC = 0;
-  f4:	10 92 02 01 	sts	0x0102, r1	; 0x800102 <__data_end>
+  f2:	10 92 02 01 	sts	0x0102, r1	; 0x800102 <__data_end>
 	ADCSRA = (1 << ADEN) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);
-  f8:	8f e8       	ldi	r24, 0x8F	; 143
-  fa:	80 93 7a 00 	sts	0x007A, r24	; 0x80007a <__TEXT_REGION_LENGTH__+0x7e007a>
-  fe:	08 95       	ret
+  f6:	8f e8       	ldi	r24, 0x8F	; 143
+  f8:	80 93 7a 00 	sts	0x007A, r24	; 0x80007a <__TEXT_REGION_LENGTH__+0x7e007a>
+  fc:	08 95       	ret
 
-00000100 <startADC>:
+000000fe <startADC>:
 }
 //********************
 
 //********** Start ADC conversion **********
 void startADC(uint8_t channel){
 	if (ISR_ADC){
- 100:	90 91 02 01 	lds	r25, 0x0102	; 0x800102 <__data_end>
- 104:	99 23       	and	r25, r25
- 106:	21 f0       	breq	.+8      	; 0x110 <startADC+0x10>
+  fe:	90 91 02 01 	lds	r25, 0x0102	; 0x800102 <__data_end>
+ 102:	99 23       	and	r25, r25
+ 104:	21 f0       	breq	.+8      	; 0x10e <startADC+0x10>
 		setError(1);
- 108:	81 e0       	ldi	r24, 0x01	; 1
- 10a:	0e 94 e4 00 	call	0x1c8	; 0x1c8 <setError>
- 10e:	08 95       	ret
+ 106:	81 e0       	ldi	r24, 0x01	; 1
+ 108:	0e 94 e3 00 	call	0x1c6	; 0x1c6 <setError>
+ 10c:	08 95       	ret
 	}else{
 		ADMUX = (1 << REFS0) | (channel << MUX0);
- 110:	80 64       	ori	r24, 0x40	; 64
- 112:	80 93 7c 00 	sts	0x007C, r24	; 0x80007c <__TEXT_REGION_LENGTH__+0x7e007c>
+ 10e:	80 64       	ori	r24, 0x40	; 64
+ 110:	80 93 7c 00 	sts	0x007C, r24	; 0x80007c <__TEXT_REGION_LENGTH__+0x7e007c>
 		ADCSRA |= (1 << ADSC);
- 116:	ea e7       	ldi	r30, 0x7A	; 122
- 118:	f0 e0       	ldi	r31, 0x00	; 0
- 11a:	80 81       	ld	r24, Z
- 11c:	80 64       	ori	r24, 0x40	; 64
- 11e:	80 83       	st	Z, r24
- 120:	08 95       	ret
+ 114:	ea e7       	ldi	r30, 0x7A	; 122
+ 116:	f0 e0       	ldi	r31, 0x00	; 0
+ 118:	80 81       	ld	r24, Z
+ 11a:	80 64       	ori	r24, 0x40	; 64
+ 11c:	80 83       	st	Z, r24
+ 11e:	08 95       	ret
 
-00000122 <handleConversion>:
+00000120 <handleConversion>:
 }
 //********************
 
 //********** Handle ADC **********
 uint16_t handleConversion(){
 	uint16_t result = ADC;
- 122:	80 91 78 00 	lds	r24, 0x0078	; 0x800078 <__TEXT_REGION_LENGTH__+0x7e0078>
- 126:	90 91 79 00 	lds	r25, 0x0079	; 0x800079 <__TEXT_REGION_LENGTH__+0x7e0079>
+ 120:	80 91 78 00 	lds	r24, 0x0078	; 0x800078 <__TEXT_REGION_LENGTH__+0x7e0078>
+ 124:	90 91 79 00 	lds	r25, 0x0079	; 0x800079 <__TEXT_REGION_LENGTH__+0x7e0079>
 	ISR_ADC = 0;
- 12a:	10 92 02 01 	sts	0x0102, r1	; 0x800102 <__data_end>
+ 128:	10 92 02 01 	sts	0x0102, r1	; 0x800102 <__data_end>
 	return result;
 }
- 12e:	08 95       	ret
+ 12c:	08 95       	ret
 
-00000130 <__vector_21>:
+0000012e <__vector_21>:
 //********************
 
 //********** ADC ISR **********
 ISR(ADC_vect){
- 130:	1f 92       	push	r1
- 132:	0f 92       	push	r0
- 134:	0f b6       	in	r0, 0x3f	; 63
- 136:	0f 92       	push	r0
- 138:	11 24       	eor	r1, r1
- 13a:	8f 93       	push	r24
+ 12e:	1f 92       	push	r1
+ 130:	0f 92       	push	r0
+ 132:	0f b6       	in	r0, 0x3f	; 63
+ 134:	0f 92       	push	r0
+ 136:	11 24       	eor	r1, r1
+ 138:	8f 93       	push	r24
 	ISR_ADC = 1;
- 13c:	81 e0       	ldi	r24, 0x01	; 1
- 13e:	80 93 02 01 	sts	0x0102, r24	; 0x800102 <__data_end>
+ 13a:	81 e0       	ldi	r24, 0x01	; 1
+ 13c:	80 93 02 01 	sts	0x0102, r24	; 0x800102 <__data_end>
 }
- 142:	8f 91       	pop	r24
- 144:	0f 90       	pop	r0
- 146:	0f be       	out	0x3f, r0	; 63
- 148:	0f 90       	pop	r0
- 14a:	1f 90       	pop	r1
- 14c:	18 95       	reti
+ 140:	8f 91       	pop	r24
+ 142:	0f 90       	pop	r0
+ 144:	0f be       	out	0x3f, r0	; 63
+ 146:	0f 90       	pop	r0
+ 148:	1f 90       	pop	r1
+ 14a:	18 95       	reti
 
-0000014e <initErrorPin>:
+0000014c <initErrorPin>:
 uint8_t port = 0;
 uint8_t pin = 18;														// To be changed by pin 19. Damaged board has pin 19 always on.
 uint8_t error = 0;
 
 void initErrorPin(uint8_t errorPin){
 	pin = errorPin;
- 14e:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_start>
+ 14c:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_start>
 	if (errorPin>=2 && errorPin<= 13){
- 152:	9e ef       	ldi	r25, 0xFE	; 254
- 154:	98 0f       	add	r25, r24
- 156:	9c 30       	cpi	r25, 0x0C	; 12
- 158:	78 f4       	brcc	.+30     	; 0x178 <initErrorPin+0x2a>
+ 150:	9e ef       	ldi	r25, 0xFE	; 254
+ 152:	98 0f       	add	r25, r24
+ 154:	9c 30       	cpi	r25, 0x0C	; 12
+ 156:	78 f4       	brcc	.+30     	; 0x176 <initErrorPin+0x2a>
 		port = 1;
- 15a:	21 e0       	ldi	r18, 0x01	; 1
- 15c:	20 93 04 01 	sts	0x0104, r18	; 0x800104 <port>
+ 158:	21 e0       	ldi	r18, 0x01	; 1
+ 15a:	20 93 04 01 	sts	0x0104, r18	; 0x800104 <port>
 		pin = errorPin-2;
- 160:	90 93 00 01 	sts	0x0100, r25	; 0x800100 <__data_start>
+ 15e:	90 93 00 01 	sts	0x0100, r25	; 0x800100 <__data_start>
 		DDRD |= (1<<pin);
- 164:	4a b1       	in	r20, 0x0a	; 10
- 166:	21 e0       	ldi	r18, 0x01	; 1
- 168:	30 e0       	ldi	r19, 0x00	; 0
- 16a:	02 c0       	rjmp	.+4      	; 0x170 <initErrorPin+0x22>
- 16c:	22 0f       	add	r18, r18
- 16e:	33 1f       	adc	r19, r19
- 170:	9a 95       	dec	r25
- 172:	e2 f7       	brpl	.-8      	; 0x16c <initErrorPin+0x1e>
- 174:	24 2b       	or	r18, r20
- 176:	2a b9       	out	0x0a, r18	; 10
+ 162:	4a b1       	in	r20, 0x0a	; 10
+ 164:	21 e0       	ldi	r18, 0x01	; 1
+ 166:	30 e0       	ldi	r19, 0x00	; 0
+ 168:	02 c0       	rjmp	.+4      	; 0x16e <initErrorPin+0x22>
+ 16a:	22 0f       	add	r18, r18
+ 16c:	33 1f       	adc	r19, r19
+ 16e:	9a 95       	dec	r25
+ 170:	e2 f7       	brpl	.-8      	; 0x16a <initErrorPin+0x1e>
+ 172:	24 2b       	or	r18, r20
+ 174:	2a b9       	out	0x0a, r18	; 10
 	}
 	if (errorPin>=14 && errorPin<= 19){
- 178:	92 ef       	ldi	r25, 0xF2	; 242
- 17a:	98 0f       	add	r25, r24
- 17c:	96 30       	cpi	r25, 0x06	; 6
- 17e:	78 f4       	brcc	.+30     	; 0x19e <initErrorPin+0x50>
+ 176:	92 ef       	ldi	r25, 0xF2	; 242
+ 178:	98 0f       	add	r25, r24
+ 17a:	96 30       	cpi	r25, 0x06	; 6
+ 17c:	78 f4       	brcc	.+30     	; 0x19c <initErrorPin+0x50>
 		port = 2;
- 180:	22 e0       	ldi	r18, 0x02	; 2
- 182:	20 93 04 01 	sts	0x0104, r18	; 0x800104 <port>
+ 17e:	22 e0       	ldi	r18, 0x02	; 2
+ 180:	20 93 04 01 	sts	0x0104, r18	; 0x800104 <port>
 		pin = errorPin-14;
- 186:	90 93 00 01 	sts	0x0100, r25	; 0x800100 <__data_start>
+ 184:	90 93 00 01 	sts	0x0100, r25	; 0x800100 <__data_start>
 		DDRB |= (1<<pin);
- 18a:	44 b1       	in	r20, 0x04	; 4
- 18c:	21 e0       	ldi	r18, 0x01	; 1
- 18e:	30 e0       	ldi	r19, 0x00	; 0
- 190:	02 c0       	rjmp	.+4      	; 0x196 <initErrorPin+0x48>
- 192:	22 0f       	add	r18, r18
- 194:	33 1f       	adc	r19, r19
- 196:	9a 95       	dec	r25
- 198:	e2 f7       	brpl	.-8      	; 0x192 <initErrorPin+0x44>
- 19a:	24 2b       	or	r18, r20
- 19c:	24 b9       	out	0x04, r18	; 4
+ 188:	44 b1       	in	r20, 0x04	; 4
+ 18a:	21 e0       	ldi	r18, 0x01	; 1
+ 18c:	30 e0       	ldi	r19, 0x00	; 0
+ 18e:	02 c0       	rjmp	.+4      	; 0x194 <initErrorPin+0x48>
+ 190:	22 0f       	add	r18, r18
+ 192:	33 1f       	adc	r19, r19
+ 194:	9a 95       	dec	r25
+ 196:	e2 f7       	brpl	.-8      	; 0x190 <initErrorPin+0x44>
+ 198:	24 2b       	or	r18, r20
+ 19a:	24 b9       	out	0x04, r18	; 4
 	}
 	if (errorPin>=23 && errorPin<= 28){
- 19e:	87 51       	subi	r24, 0x17	; 23
- 1a0:	86 30       	cpi	r24, 0x06	; 6
- 1a2:	88 f4       	brcc	.+34     	; 0x1c6 <initErrorPin+0x78>
+ 19c:	87 51       	subi	r24, 0x17	; 23
+ 19e:	86 30       	cpi	r24, 0x06	; 6
+ 1a0:	88 f4       	brcc	.+34     	; 0x1c4 <initErrorPin+0x78>
 		port = 3;
- 1a4:	93 e0       	ldi	r25, 0x03	; 3
- 1a6:	90 93 04 01 	sts	0x0104, r25	; 0x800104 <port>
+ 1a2:	93 e0       	ldi	r25, 0x03	; 3
+ 1a4:	90 93 04 01 	sts	0x0104, r25	; 0x800104 <port>
 		pin = errorPin-23;
- 1aa:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_start>
+ 1a8:	80 93 00 01 	sts	0x0100, r24	; 0x800100 <__data_start>
 		DDRC |= (1<<pin);
- 1ae:	47 b1       	in	r20, 0x07	; 7
- 1b0:	21 e0       	ldi	r18, 0x01	; 1
- 1b2:	30 e0       	ldi	r19, 0x00	; 0
- 1b4:	b9 01       	movw	r22, r18
- 1b6:	02 c0       	rjmp	.+4      	; 0x1bc <initErrorPin+0x6e>
- 1b8:	66 0f       	add	r22, r22
- 1ba:	77 1f       	adc	r23, r23
- 1bc:	8a 95       	dec	r24
- 1be:	e2 f7       	brpl	.-8      	; 0x1b8 <initErrorPin+0x6a>
- 1c0:	cb 01       	movw	r24, r22
- 1c2:	84 2b       	or	r24, r20
- 1c4:	87 b9       	out	0x07, r24	; 7
- 1c6:	08 95       	ret
+ 1ac:	47 b1       	in	r20, 0x07	; 7
+ 1ae:	21 e0       	ldi	r18, 0x01	; 1
+ 1b0:	30 e0       	ldi	r19, 0x00	; 0
+ 1b2:	b9 01       	movw	r22, r18
+ 1b4:	02 c0       	rjmp	.+4      	; 0x1ba <initErrorPin+0x6e>
+ 1b6:	66 0f       	add	r22, r22
+ 1b8:	77 1f       	adc	r23, r23
+ 1ba:	8a 95       	dec	r24
+ 1bc:	e2 f7       	brpl	.-8      	; 0x1b6 <initErrorPin+0x6a>
+ 1be:	cb 01       	movw	r24, r22
+ 1c0:	84 2b       	or	r24, r20
+ 1c2:	87 b9       	out	0x07, r24	; 7
+ 1c4:	08 95       	ret
 
-000001c8 <setError>:
+000001c6 <setError>:
 	}
 }
 
 void setError(uint8_t errorCode){
 		error = errorCode;
- 1c8:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <error>
+ 1c6:	80 93 03 01 	sts	0x0103, r24	; 0x800103 <error>
 		switch(port){
- 1cc:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <port>
- 1d0:	81 30       	cpi	r24, 0x01	; 1
- 1d2:	71 f0       	breq	.+28     	; 0x1f0 <setError+0x28>
- 1d4:	28 f0       	brcs	.+10     	; 0x1e0 <setError+0x18>
- 1d6:	82 30       	cpi	r24, 0x02	; 2
- 1d8:	c1 f0       	breq	.+48     	; 0x20a <setError+0x42>
- 1da:	83 30       	cpi	r24, 0x03	; 3
- 1dc:	19 f1       	breq	.+70     	; 0x224 <setError+0x5c>
- 1de:	2f c0       	rjmp	.+94     	; 0x23e <setError+0x76>
+ 1ca:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <port>
+ 1ce:	81 30       	cpi	r24, 0x01	; 1
+ 1d0:	71 f0       	breq	.+28     	; 0x1ee <setError+0x28>
+ 1d2:	28 f0       	brcs	.+10     	; 0x1de <setError+0x18>
+ 1d4:	82 30       	cpi	r24, 0x02	; 2
+ 1d6:	c1 f0       	breq	.+48     	; 0x208 <setError+0x42>
+ 1d8:	83 30       	cpi	r24, 0x03	; 3
+ 1da:	19 f1       	breq	.+70     	; 0x222 <setError+0x5c>
+ 1dc:	2f c0       	rjmp	.+94     	; 0x23c <setError+0x76>
 			case 0:
 				initErrorPin(pin);
- 1e0:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
- 1e4:	0e 94 a7 00 	call	0x14e	; 0x14e <initErrorPin>
+ 1de:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
+ 1e2:	0e 94 a6 00 	call	0x14c	; 0x14c <initErrorPin>
 				setError(0);
- 1e8:	80 e0       	ldi	r24, 0x00	; 0
- 1ea:	0e 94 e4 00 	call	0x1c8	; 0x1c8 <setError>
+ 1e6:	80 e0       	ldi	r24, 0x00	; 0
+ 1e8:	0e 94 e3 00 	call	0x1c6	; 0x1c6 <setError>
 				break;
- 1ee:	08 95       	ret
+ 1ec:	08 95       	ret
 			case 1:
 				PORTD |= (1<<pin);
- 1f0:	2b b1       	in	r18, 0x0b	; 11
- 1f2:	81 e0       	ldi	r24, 0x01	; 1
- 1f4:	90 e0       	ldi	r25, 0x00	; 0
- 1f6:	00 90 00 01 	lds	r0, 0x0100	; 0x800100 <__data_start>
- 1fa:	02 c0       	rjmp	.+4      	; 0x200 <setError+0x38>
- 1fc:	88 0f       	add	r24, r24
- 1fe:	99 1f       	adc	r25, r25
- 200:	0a 94       	dec	r0
- 202:	e2 f7       	brpl	.-8      	; 0x1fc <setError+0x34>
- 204:	82 2b       	or	r24, r18
- 206:	8b b9       	out	0x0b, r24	; 11
+ 1ee:	2b b1       	in	r18, 0x0b	; 11
+ 1f0:	81 e0       	ldi	r24, 0x01	; 1
+ 1f2:	90 e0       	ldi	r25, 0x00	; 0
+ 1f4:	00 90 00 01 	lds	r0, 0x0100	; 0x800100 <__data_start>
+ 1f8:	02 c0       	rjmp	.+4      	; 0x1fe <setError+0x38>
+ 1fa:	88 0f       	add	r24, r24
+ 1fc:	99 1f       	adc	r25, r25
+ 1fe:	0a 94       	dec	r0
+ 200:	e2 f7       	brpl	.-8      	; 0x1fa <setError+0x34>
+ 202:	82 2b       	or	r24, r18
+ 204:	8b b9       	out	0x0b, r24	; 11
 				break;
- 208:	08 95       	ret
+ 206:	08 95       	ret
 			case 2:
 				PORTB |= (1<<pin);
- 20a:	25 b1       	in	r18, 0x05	; 5
- 20c:	81 e0       	ldi	r24, 0x01	; 1
- 20e:	90 e0       	ldi	r25, 0x00	; 0
- 210:	00 90 00 01 	lds	r0, 0x0100	; 0x800100 <__data_start>
- 214:	02 c0       	rjmp	.+4      	; 0x21a <setError+0x52>
- 216:	88 0f       	add	r24, r24
- 218:	99 1f       	adc	r25, r25
- 21a:	0a 94       	dec	r0
- 21c:	e2 f7       	brpl	.-8      	; 0x216 <setError+0x4e>
- 21e:	82 2b       	or	r24, r18
- 220:	85 b9       	out	0x05, r24	; 5
+ 208:	25 b1       	in	r18, 0x05	; 5
+ 20a:	81 e0       	ldi	r24, 0x01	; 1
+ 20c:	90 e0       	ldi	r25, 0x00	; 0
+ 20e:	00 90 00 01 	lds	r0, 0x0100	; 0x800100 <__data_start>
+ 212:	02 c0       	rjmp	.+4      	; 0x218 <setError+0x52>
+ 214:	88 0f       	add	r24, r24
+ 216:	99 1f       	adc	r25, r25
+ 218:	0a 94       	dec	r0
+ 21a:	e2 f7       	brpl	.-8      	; 0x214 <setError+0x4e>
+ 21c:	82 2b       	or	r24, r18
+ 21e:	85 b9       	out	0x05, r24	; 5
 				break;
- 222:	08 95       	ret
+ 220:	08 95       	ret
 			case 3:
 				PORTC |= (1<<pin);
- 224:	28 b1       	in	r18, 0x08	; 8
- 226:	81 e0       	ldi	r24, 0x01	; 1
- 228:	90 e0       	ldi	r25, 0x00	; 0
- 22a:	00 90 00 01 	lds	r0, 0x0100	; 0x800100 <__data_start>
- 22e:	02 c0       	rjmp	.+4      	; 0x234 <setError+0x6c>
- 230:	88 0f       	add	r24, r24
- 232:	99 1f       	adc	r25, r25
- 234:	0a 94       	dec	r0
- 236:	e2 f7       	brpl	.-8      	; 0x230 <setError+0x68>
- 238:	82 2b       	or	r24, r18
- 23a:	88 b9       	out	0x08, r24	; 8
+ 222:	28 b1       	in	r18, 0x08	; 8
+ 224:	81 e0       	ldi	r24, 0x01	; 1
+ 226:	90 e0       	ldi	r25, 0x00	; 0
+ 228:	00 90 00 01 	lds	r0, 0x0100	; 0x800100 <__data_start>
+ 22c:	02 c0       	rjmp	.+4      	; 0x232 <setError+0x6c>
+ 22e:	88 0f       	add	r24, r24
+ 230:	99 1f       	adc	r25, r25
+ 232:	0a 94       	dec	r0
+ 234:	e2 f7       	brpl	.-8      	; 0x22e <setError+0x68>
+ 236:	82 2b       	or	r24, r18
+ 238:	88 b9       	out	0x08, r24	; 8
 				break;
- 23c:	08 95       	ret
+ 23a:	08 95       	ret
 			default:
 				initErrorPin(pin);
- 23e:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
- 242:	0e 94 a7 00 	call	0x14e	; 0x14e <initErrorPin>
+ 23c:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
+ 240:	0e 94 a6 00 	call	0x14c	; 0x14c <initErrorPin>
 				setError(0);
- 246:	80 e0       	ldi	r24, 0x00	; 0
- 248:	0e 94 e4 00 	call	0x1c8	; 0x1c8 <setError>
- 24c:	08 95       	ret
+ 244:	80 e0       	ldi	r24, 0x00	; 0
+ 246:	0e 94 e3 00 	call	0x1c6	; 0x1c6 <setError>
+ 24a:	08 95       	ret
 
-0000024e <clearError>:
+0000024c <clearError>:
 				break;
 		}
 }
 
 void clearError(){
 	switch(port){
- 24e:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <port>
- 252:	81 30       	cpi	r24, 0x01	; 1
- 254:	71 f0       	breq	.+28     	; 0x272 <clearError+0x24>
- 256:	28 f0       	brcs	.+10     	; 0x262 <clearError+0x14>
- 258:	82 30       	cpi	r24, 0x02	; 2
- 25a:	c1 f0       	breq	.+48     	; 0x28c <clearError+0x3e>
- 25c:	83 30       	cpi	r24, 0x03	; 3
- 25e:	61 f0       	breq	.+24     	; 0x278 <clearError+0x2a>
- 260:	0e c0       	rjmp	.+28     	; 0x27e <clearError+0x30>
+ 24c:	80 91 04 01 	lds	r24, 0x0104	; 0x800104 <port>
+ 250:	81 30       	cpi	r24, 0x01	; 1
+ 252:	71 f0       	breq	.+28     	; 0x270 <clearError+0x24>
+ 254:	28 f0       	brcs	.+10     	; 0x260 <clearError+0x14>
+ 256:	82 30       	cpi	r24, 0x02	; 2
+ 258:	71 f0       	breq	.+28     	; 0x276 <clearError+0x2a>
+ 25a:	83 30       	cpi	r24, 0x03	; 3
+ 25c:	79 f0       	breq	.+30     	; 0x27c <clearError+0x30>
+ 25e:	11 c0       	rjmp	.+34     	; 0x282 <clearError+0x36>
 		case 0:
 			initErrorPin(pin);
- 262:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
- 266:	0e 94 a7 00 	call	0x14e	; 0x14e <initErrorPin>
+ 260:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
+ 264:	0e 94 a6 00 	call	0x14c	; 0x14c <initErrorPin>
 			setError(0);
- 26a:	80 e0       	ldi	r24, 0x00	; 0
- 26c:	0e 94 e4 00 	call	0x1c8	; 0x1c8 <setError>
+ 268:	80 e0       	ldi	r24, 0x00	; 0
+ 26a:	0e 94 e3 00 	call	0x1c6	; 0x1c6 <setError>
 			break;
- 270:	08 95       	ret
+ 26e:	08 95       	ret
 		case 1:
 			PORTD &= (0<<pin);
- 272:	8b b1       	in	r24, 0x0b	; 11
- 274:	1b b8       	out	0x0b, r1	; 11
+ 270:	8b b1       	in	r24, 0x0b	; 11
+ 272:	1b b8       	out	0x0b, r1	; 11
 			break;
- 276:	08 95       	ret
+ 274:	08 95       	ret
 		case 2:
-			//PORTB &= (0<<pin);
+			PORTB &= (0<<pin);
+ 276:	85 b1       	in	r24, 0x05	; 5
+ 278:	15 b8       	out	0x05, r1	; 5
 			break;
+ 27a:	08 95       	ret
 		case 3:
 			PORTC &= (0<<pin);
- 278:	88 b1       	in	r24, 0x08	; 8
- 27a:	18 b8       	out	0x08, r1	; 8
+ 27c:	88 b1       	in	r24, 0x08	; 8
+ 27e:	18 b8       	out	0x08, r1	; 8
 			break;
- 27c:	08 95       	ret
+ 280:	08 95       	ret
 		default:
 			initErrorPin(pin);
- 27e:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
- 282:	0e 94 a7 00 	call	0x14e	; 0x14e <initErrorPin>
+ 282:	80 91 00 01 	lds	r24, 0x0100	; 0x800100 <__data_start>
+ 286:	0e 94 a6 00 	call	0x14c	; 0x14c <initErrorPin>
 			setError(0);
- 286:	80 e0       	ldi	r24, 0x00	; 0
- 288:	0e 94 e4 00 	call	0x1c8	; 0x1c8 <setError>
- 28c:	08 95       	ret
+ 28a:	80 e0       	ldi	r24, 0x00	; 0
+ 28c:	0e 94 e3 00 	call	0x1c6	; 0x1c6 <setError>
+ 290:	08 95       	ret
 
-0000028e <_exit>:
- 28e:	f8 94       	cli
+00000292 <_exit>:
+ 292:	f8 94       	cli
 
-00000290 <__stop_program>:
- 290:	ff cf       	rjmp	.-2      	; 0x290 <__stop_program>
+00000294 <__stop_program>:
+ 294:	ff cf       	rjmp	.-2      	; 0x294 <__stop_program>

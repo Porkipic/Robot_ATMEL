@@ -24,7 +24,7 @@ extern volatile uint8_t ISR_ADC;														// External variable visible to th
 ////////////////////////////// FUNCTIONS DECLARATION //////////////////////////////
 void initADC();																			// Initialize ADC
 void startADC(uint8_t channel);															// Start conversion
-uint16_t handleConversion();															// Return conversion result
+uint16_t getADCValue();															// Return conversion result
 ////////////////////////////// END FUNCTIONS DECLARATION //////////////////////////
 
 #endif

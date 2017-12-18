@@ -64,7 +64,7 @@ int main (void){
 	//********** Pins configuration **********
 	DDRB	= 0b00000011;																// Set pin direction (1=OUTPUT, 0=INPUT)
 	PORTB	= 0b00000100;																// Set pin state :
-	DDRC	= 0b00000000;																// - if OUTPUT:	1= HIGH, 		0= LOW
+	DDRC	= 0b00000001;																// - if OUTPUT:	1= HIGH, 		0= LOW
 	PORTC	= 0b00000000;																// - if INPUT:	1= Pullup on,	0= Pullup off
 	DDRD	= 0b11111111;																//
 	PORTD	= 0b00000000;																//
@@ -72,14 +72,12 @@ int main (void){
 	
 	//********** Services Initialization **********
 	initADC();
-	initErrorPin(18);
+	initErrorPin(23);
 	//********************
-	setError(2);
 	sei();																				// Enable Global Interrupt
 ////////////////////////////// END SETUP /////////////////////////////////////////
 	while(1) {
 ////////////////////////////// MAIN LOOP /////////////////////////////////////////		
-		
 		if (!(PINB & (1 << PINB2))){
 			startADC(ADC5);
 			clearError();
@@ -87,9 +85,9 @@ int main (void){
 		//********** ISR flags checks **********
 		if (ISR_ADC){
 			uint16_t ADCValue = 0;
-			ADCValue = handleConversion();
-			PORTD = ADCValue;
-			PORTB = (ADCValue>>8)|0x04);
+			ADCValue = getADCValue();
+			PORTD = (PORTB & 0x00) | ADCValue;
+			PORTB = (PORTB & 0x00) | ((ADCValue>>8) | 0xFC);
 		}
 		//********************
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////
