@@ -8,3 +8,5 @@ PersonalLibraries\ADC\ADC.c
 
 PersonalLibraries\ErrorManager\ErrorManager.c
 
+PersonalLibraries\PWM\PWM.c
+

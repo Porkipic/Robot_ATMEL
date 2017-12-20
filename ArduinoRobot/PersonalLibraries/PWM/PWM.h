@@ -1,0 +1,15 @@
+#ifndef PWM_H_
+#define PWM_H_
+
+////////////////////////////// INCLUDES ///////////////////////////////////////////
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include "ErrorManager.h"
+////////////////////////////// END INCLUDES ///////////////////////////////////////
+
+////////////////////////////// FUNCTIONS DECLARATION //////////////////////////////
+void initPWM();																			// Initialize PWM. ONLY WORKS ON PIN 11 & 12
+void setPWM(uint8_t pinPWM , uint8_t valuePWM);											// Set PWM value on pinPWM
+////////////////////////////// END FUNCTIONS DECLARATION //////////////////////////
+
+#endif /* PWM_H_ */
