@@ -2,6 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "ADC.h"
+#include "PWM.h"
 ////////////////////////////// END INCLUDES ///////////////////////////////////////
 
 ////////////////////////////// ISR FLAGS //////////////////////////////////////////
@@ -73,21 +74,28 @@ int main (void){
 	//********** Services Initialization **********
 	initADC();
 	initErrorPin(23);
+	initPWM();
 	//********************
 	sei();																				// Enable Global Interrupt
 ////////////////////////////// END SETUP /////////////////////////////////////////
 	while(1) {
 ////////////////////////////// MAIN LOOP /////////////////////////////////////////		
+		
 		if (!(PINB & (1 << PINB2))){
+			setPWM(11, 1);
+			//PORTB = 0x01;
+		}else{
 			startADC(ADC5);
-			clearError();
+			uint16_t ADCValue = getADCValue();
+			setPWM(11, ADCValue>>2);
+			//PORTB = 0x02;
 		}
 		//********** ISR flags checks **********
 		if (ISR_ADC){
 			uint16_t ADCValue = 0;
 			ADCValue = getADCValue();
-			PORTD = (PORTB & 0x00) | ADCValue;
-			PORTB = (PORTB & 0x00) | ((ADCValue>>8) | 0xFC);
+			//PORTD = (PORTB & 0x00) | ADCValue;
+			//PORTB = (PORTB & 0x00) | ((ADCValue>>8) | 0xFC);
 		}
 		//********************
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////
