@@ -1,6 +1,5 @@
 #include "ADC.h"
 
-////////////////////////////// ADC //////////////////////////////////////////////
 //********** Initialize ADC **********
 void initADC(){
 	ISR_ADC = 0;																		// Reset to allow nez conversion after initialization
@@ -32,4 +31,3 @@ ISR(ADC_vect){
 	ISR_ADC = 1;																		// Set ISR_ADC. Variable to be polled in Main code
 }
 //********************
-////////////////////////////// END ADC //////////////////////////////////////////

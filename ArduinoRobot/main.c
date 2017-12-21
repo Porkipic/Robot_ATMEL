@@ -22,7 +22,7 @@ volatile uint8_t ISR_TMR1CB		= 0;													// Timer/Counter 1 Compare Match B
 volatile uint8_t ISR_TMR1OVF	= 0;													// Timer/Counter 1 Overflow
 volatile uint8_t ISR_TMR0CA		= 0;													// Timer/Counter 0 Compare Match A
 volatile uint8_t ISR_TMR0CB		= 0;													// Timer/Counter 0 Compare Match B
-volatile uint8_t ISR_TMR0OVF	= 0;													// Timer/Counter 0 Overflow
+//volatile uint8_t ISR_TMR0OVF	= 0;													// Timer/Counter 0 Overflow
 volatile uint8_t ISR_SPI		= 0;													// SPI Serial Transfer Complete
 volatile uint8_t ISR_USARTRX	= 0;													// USART Rx Complete
 volatile uint8_t ISR_USARTUDRE	= 0;													// USART Data Register Empty
@@ -96,6 +96,9 @@ int main (void){
 			ADCValue = getADCValue();
 			//PORTD = (PORTB & 0x00) | ADCValue;
 			//PORTB = (PORTB & 0x00) | ((ADCValue>>8) | 0xFC);
+		}
+		if (ISR_TMR1CAPT){
+			
 		}
 		//********************
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////

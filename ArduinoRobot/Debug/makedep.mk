@@ -10,3 +10,5 @@ PersonalLibraries\ErrorManager\ErrorManager.c
 
 PersonalLibraries\PWM\PWM.c
 
+PersonalLibraries\Timer\Timer.c
+

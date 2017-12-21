@@ -12,4 +12,4 @@ void initPWM();																			// Initialize PWM. ONLY WORKS ON PIN 11 & 12
 void setPWM(uint8_t pinPWM , uint8_t valuePWM);											// Set PWM value on pinPWM
 ////////////////////////////// END FUNCTIONS DECLARATION //////////////////////////
 
-#endif /* PWM_H_ */
+#endif
