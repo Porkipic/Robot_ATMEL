@@ -106,16 +106,11 @@
   <avrgcc.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>DEBUG</Value>
-      <Value>F_CPU=16000000</Value>
     </ListValues>
   </avrgcc.compiler.symbols.DefSymbols>
   <avrgcc.compiler.directories.IncludePaths>
     <ListValues>
       <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.2.150\include</Value>
-      <Value>../PersonalLibraries/ErrorManager</Value>
-      <Value>../PersonalLibraries/PWM</Value>
-      <Value>../PersonalLibraries/ADC</Value>
-      <Value>../PersonalLibraries/Timer</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -128,11 +123,6 @@
       <Value>libm</Value>
     </ListValues>
   </avrgcc.linker.libraries.Libraries>
-  <avrgcc.linker.libraries.LibrarySearchPaths>
-    <ListValues>
-      <Value>../PersonalLibraries</Value>
-    </ListValues>
-  </avrgcc.linker.libraries.LibrarySearchPaths>
   <avrgcc.assembler.general.IncludePaths>
     <ListValues>
       <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.2.150\include</Value>
@@ -146,37 +136,6 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="PersonalLibraries\ADC\ADC.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="PersonalLibraries\ADC\ADC.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="PersonalLibraries\ErrorManager\ErrorManager.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="PersonalLibraries\ErrorManager\ErrorManager.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="PersonalLibraries\PWM\PWM.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="PersonalLibraries\PWM\PWM.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="PersonalLibraries\Timer\Timer.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="PersonalLibraries\Timer\Timer.h">
-      <SubType>compile</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="PersonalLibraries" />
-    <Folder Include="PersonalLibraries\ADC\" />
-    <Folder Include="PersonalLibraries\ErrorManager" />
-    <Folder Include="PersonalLibraries\Timer" />
-    <Folder Include="PersonalLibraries\PWM" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
