@@ -1,10 +1,6 @@
 ////////////////////////////// DEFINITIONS ////////////////////////////////////////
 #define F_CPU							16000000UL	// Define CPU speed
 #define TIMEUNIT						10			// Time unit in us
-#define PRESCALER						8			// Timer prescaler
-
-#define BACKWARD						0
-#define FORWARD							1
 
 #define OUTPUT							1		// Used for setPin() function
 #define INPUT							0		// Used for setPin() function
@@ -13,11 +9,11 @@
 #define PULLUP_ENABLED					1		// Used for setPin() function
 #define NO_PULLUP						0		// Used for setPin() function
 
-#define PWM_SUPERFAST					1		// Used to set Max PWM frequency in init8BitsPWM() function (Max 62500 Hz)
-#define PWM_FAST						8		// Used to set Max PWM frequency in init8BitsPWM() function (Max 7812 Hz)
-#define PWM_MEDIUM						64		// Used to set Max PWM frequency in init8BitsPWM() function (Max 976 Hz)
-#define PWM_SLOW						256		// Used to set Max PWM frequency in init8BitsPWM() function (Max 244 Hz)
-#define PWM_SUPERSLOW					1024	// Used to set Max PWM frequency in init8BitsPWM() function (Max 61 Hz)
+#define SUPERFAST						1		// Used to set Max PWM frequency in init8BitsPWM() function (Max 62500 Hz)
+#define FAST							8		// Used to set Max PWM frequency in init8BitsPWM() function (Max 7812 Hz)
+#define MEDIUM							64		// Used to set Max PWM frequency in init8BitsPWM() function (Max 976 Hz)
+#define SLOW							256		// Used to set Max PWM frequency in init8BitsPWM() function (Max 244 Hz)
+#define SUPERSLOW						1024	// Used to set Max PWM frequency in init8BitsPWM() function (Max 61 Hz)
 
 #define FALLING							0		// Used for Input Capture Edge Selection
 #define RISING							1		// Used for Input Capture Edge Selection
@@ -81,13 +77,23 @@ volatile uint16_t result_ADC			= 0;	// ADC result holder (updated by ISR)
 
 volatile uint32_t pulsesEncCHA			= 0;	// Pulse counter for encoder channel A (updated by ISR)
 volatile uint32_t pulsesEncCHB			= 0;	// Pulse counter for encoder channel B (updated by ISR)
-volatile uint8_t lastInterruptChannel	= 0;	//	Which encoder channel triggered the last external interrupt (updated by ISR)
+volatile uint8_t lastInterruptChannel	= 0;	// Which encoder channel triggered the last external interrupt (updated by ISR)
+uint16_t deltaTimeCHA					= 0;	// Time between encoder Channel A pulses
+uint16_t deltaTimeCHB					= 0;	// Time between encoder Channel A pulses
 
 volatile uint32_t millisSeconds			= 0;	// Elapsed milliseconds since boot (updated by ISR)
 volatile uint16_t elapsed				= 0;
 volatile uint32_t microsSeconds			= 0;	// Elapsed microseconds since boot (updated by ISR)
 volatile uint16_t micros1000s			= 0;	// Rolling counter for 1000s of microseconds (updated by ISR)
-volatile uint16_t inputCaptureTime		= 0;	// Input capture timestamp (updated by ISR)
+volatile uint16_t inputCaptureTimeCHA	= 0;	// Input capture timestamp (updated by ISR)
+volatile uint16_t inputCaptureTimeCHB	= 0;	// Input capture timestamp (updated by ISR)
+volatile uint16_t prevCaptureTimeCHA	= 0;	// Previous Input capture timestamp (updated by ISR)
+volatile uint16_t prevCaptureTimeCHB	= 0;	// Previous Input capture timestamp (updated by ISR)
+
+uint16_t prescalerPWM					= 0;	// Input Capture time unit in nanoseconds
+uint16_t prescalerTimer					= 0;	// Input Capture time unit in nanoseconds
+uint16_t prescalerInputCapture			= 0;	// Input Capture time unit in nanoseconds
+uint16_t inputCaptureTimeUnit			= 0;	// Time unit in nanoseconds
 
 uint8_t errorPin						= 18;	// Pin used to control the error LED
 uint8_t errorCode						= 0;
@@ -112,8 +118,7 @@ void setError(uint8_t code);
 void clearError();
 
 void initTimer();
-void startPulseLength(uint8_t state, uint16_t timeout);
-uint16_t getPulseLength();
+void initInputCapture();
 ////////////////////////////// END FUNCTIONS DECLARATION //////////////////////////
 
 int main (void){
@@ -131,7 +136,7 @@ int main (void){
 	//********** Services Initialization **********
 	initADC();
 	initErrorPin(errorPin);
-	init8BitsPWM(TIMER0, PWM_SUPERSLOW);		// Initialize PWM Timer with frequency limiter (Hz)
+	init8BitsPWM(TIMER0, SUPERSLOW);		// Initialize PWM Timer with frequency limiter (Hz)
 	initTimer();
 	sei();										// Enable Global Interrupt
 	//********************
@@ -140,6 +145,24 @@ int main (void){
 	while(1) {
 ////////////////////////////// MAIN LOOP /////////////////////////////////////////		
 		//********** ISR flags checks **********
+		if(ISR_TMR1CAPT){
+			switch (lastInterruptChannel){
+				case 0:
+					if (prevCaptureTimeCHA>inputCaptureTimeCHA){						// Prevents error when counter overflows
+						deltaTimeCHA = (65536-prevCaptureTimeCHA)+inputCaptureTimeCHA;	// 65536 = MAX counter value
+					}else{
+						deltaTimeCHA = inputCaptureTimeCHA-prevCaptureTimeCHA;
+					}
+				break;
+				case 1:
+					if (prevCaptureTimeCHB>inputCaptureTimeCHB){
+						deltaTimeCHB = (65536-prevCaptureTimeCHB)+inputCaptureTimeCHB;
+					}else{
+						deltaTimeCHB = inputCaptureTimeCHB-prevCaptureTimeCHB;
+					}
+				break;
+			}
+		}
 		if(ISR_ADC){
 			switch (channelADCinUse){
 				case 0:
@@ -222,24 +245,25 @@ void clearError(){
 	setPin(errorPin, OUTPUT,LOW);
 }
 
-void init8BitsPWM(uint8_t timer, uint16_t maxFrequency){
+void init8BitsPWM(uint8_t timer, uint16_t prescaler){
+	prescalerPWM = prescaler;
 	switch(timer){
 		case 0:
 			TCCR0A |= (1<<WGM01) | (1<<WGM00);						// Set mode to fast PWM
-			switch (maxFrequency){
-				case PWM_SUPERFAST:
+			switch (prescaler){
+				case SUPERFAST:
 					TCCR0B |= (0<<CS02) | (0<<CS01) | (1<<CS00);	// Set prescaler on clock (no prescaler)
 				break;
-				case PWM_FAST:
+				case FAST:
 					TCCR0B |= (0<<CS02) | (1<<CS01) | (0<<CS00);	// Set prescaler on clock (CLKio/8)
 				break;
-				case PWM_MEDIUM:
+				case MEDIUM:
 					TCCR0B |= (0<<CS02) | (1<<CS01) | (1<<CS00);	// Set prescaler on clock (CLKio/64)
 				break;
-				case PWM_SLOW:
+				case SLOW:
 					TCCR0B |= (1<<CS02) | (0<<CS01) | (0<<CS00);	// Set prescaler on clock (CLKio/256)
 				break;
-				case PWM_SUPERSLOW:
+				case SUPERSLOW:
 					TCCR0B |= (1<<CS02) | (0<<CS01) | (1<<CS00);	// Set prescaler on clock (CLKio/1024)
 				break;
 				default:
@@ -251,20 +275,20 @@ void init8BitsPWM(uint8_t timer, uint16_t maxFrequency){
 		break;
 		case 1:
 			TCCR1A |= (1<<WGM11) | (1<<WGM10);						// Set mode to fast PWM
-			switch(maxFrequency){
-				case PWM_SUPERFAST:
+			switch(prescaler){
+				case SUPERFAST:
 					TCCR1B |= (0<<CS12) | (0<<CS11) | (1<<CS10);	// Set prescaler on clock (no prescaler)
 				break;
-				case PWM_FAST:
+				case FAST:
 					TCCR1B |= (0<<CS12) | (1<<CS11) | (0<<CS10);	// Set prescaler on clock (CLKio/8)
 				break;
-				case PWM_MEDIUM:
+				case MEDIUM:
 					TCCR1B |= (0<<CS12) | (1<<CS11) | (1<<CS10);	// Set prescaler on clock (CLKio/64)
 				break;
-				case PWM_SLOW:
+				case SLOW:
 					TCCR1B |= (1<<CS12) | (0<<CS11) | (0<<CS10);	// Set prescaler on clock (CLKio/256)
 				break;
-				case PWM_SUPERSLOW:
+				case SUPERSLOW:
 					TCCR1B |= (1<<CS12) | (0<<CS11) | (1<<CS10);	// Set prescaler on clock (CLKio/1024)
 				default:
 					TCCR1B |= (1<<CS12) | (0<<CS11) | (1<<CS10);	// Default to SUPERSLOW PWM frequency
@@ -334,30 +358,41 @@ void setPWM(uint8_t pinPWM, uint8_t valuePWM){
 	}
 }
 
-void initTimer(){	
-	TCCR1B = (1<<WGM13) |(1<<WGM12) | (0<<CS12) |(1<<CS11) | (0<<CS10);		// Timer1 CTC mode ICR1 as MAX value (WGMx), 8 prescaler (CTC)
-	ICR1 = (F_CPU/(2*PRESCALER*(1000000/(TIMEUNIT*2))))-1;						// (F_CPU/2*prescaler*Frequency)-1
-	TIMSK1 = (1<<OCIE1A);						// Enable interrupt when counter reaches ICR1			
-	TCNT1 = 0;									// Timer1 counter reset
+void initTimer(uint16_t prescaler){
+	prescalerTimer = prescaler;
+	TCCR2A = (1<<WGM21);						// Timer1 CTC mode OCR2A as MAX value (WGMx)						
+	TCCR2B = (1<<CS21);							// 8 prescaler (CTC)
+	uint8_t CTCTopValue = (F_CPU/(2*prescaler*(1000000/(TIMEUNIT*2))))-1;	// (F_CPU/2*prescaler*Frequency)-1
+	if (CTCTopValue>255){						// 8 bits timer, TOP value cannot exceed 255
+		setError(6);
+	}else{
+		OCR2A = CTCTopValue;					// Set OCR2A to calculated TOP value			
+		TIMSK2 = (1<<OCIE2A);					// Enable interrupt when counter reaches ICR1
+		TCNT2 = 0;								// Timer1 counter reset
+	}
 }
-void startPulseLength(uint8_t state, uint16_t timeout){
-	TCNT1 = 0;																			// Timer 1 counter reset
-	OCR1A = timeout*7;																	// Set max measurable pulse length duration. TO BE CHECK WITH DATASHEET FORMULA
-	TCCR1B = (state<<ICES1);															// Set which edge is detected
-	TIMSK1 = (1<<ICIE1) | (1<<OCIE1A);													// Enable Input Capture Interrupt, enable Output Compare A interrupt
+void initInputCapture(uint16_t prescaler){
+	prescalerInputCapture = prescaler;
+	inputCaptureTimeUnit = 
+	TCCR1B = (1<<ICNC1) | (1<<ICES1) | (1<<CS10);	// Input capture noise canceler enabled, detect on rising edge, no prescaling
+	TIMSK1 = (1<<ICIE1);
 }
-uint16_t getPulseLength(){
-	ISR_TMR1CAPT = 0;
-	return inputCaptureTime/2;																// Return the timestamp (/2 due to pre-scaler set to 8)  TODO recalculate the divider
+
+uint8_t calculateFrequency(uint16_t deltaTime){
+	uint8_t result = 0;
+	result = 1/deltaTime;
+	return result;
 }
 ////////////////////////////// END FUNCTIONS DEFINITIONS //////////////////////////
 
 ////////////////////////////// ISRs //////////////////////////
 ISR(INT0_vect){									// External Interrupt Request 0
 	pulsesEncCHA ++;
+	lastInterruptChannel = 0;
 }
 ISR(INT1_vect){									// External Interrupt Request 1
 	pulsesEncCHB ++;
+	lastInterruptChannel = 1;
 }
 ISR(PCINT0_vect){								// Pin Change Interrupt Request 0
 	ISR_PCINT0 = 0;
@@ -372,7 +407,13 @@ ISR(WDT_vect){									// Watchdog Time-out Interrupt
 	ISR_WDT = 0;
 }
 ISR(TIMER2_COMPA_vect){							// Timer/Counter 2 Compare Match A
-	ISR_TMR2CA = 0;
+	microsSeconds += TIMEUNIT;					// Increment the number of microseconds by the TIMEUNIT
+	micros1000s += TIMEUNIT;					// Increment rolling counter by TIMEUNIT
+	if (micros1000s>=1000){
+		millisSeconds++;						// Increments milliseconds counter every 1000s of microseconds
+		micros1000s -= 1000;					// Adds the any extra microseconds to the rolling counter
+		elapsed ++;
+	}
 }
 ISR(TIMER2_COMPB_vect){							// Timer/Counter 2 Compare Match B
 	ISR_TMR2CB = 0;
@@ -381,16 +422,20 @@ ISR(TIMER2_OVF_vect){							// Timer/Counter 2 Overflow
 	ISR_TMR2OVF = 0;
 }
 ISR(TIMER1_CAPT_vect){							// Timer/Counter 1 Capture Event
-	ISR_TMR1CAPT = 0;							
+	ISR_TMR1CAPT = 1;
+	switch (lastInterruptChannel){						//Check which encoder channel sent triggered the Input Capture
+		case 0:
+			prevCaptureTimeCHA = inputCaptureTimeCHA;	// Move current timestamp to the previous one
+			inputCaptureTimeCHA = ICR1H;				// Update current timestamp
+		break;
+		case 1:
+			prevCaptureTimeCHB = inputCaptureTimeCHB;	// Move current timestamp to the previous one
+			inputCaptureTimeCHB = ICR1H;				// Update current timestamp
+		break;
+	}
 }
 ISR(TIMER1_COMPA_vect){							// Timer/Counter 1 Compare Match A
-	microsSeconds += TIMEUNIT;					// Increment the number of microseconds by the TIMEUNIT
-	micros1000s += TIMEUNIT;					// Increment rolling counter by TIMEUNIT
-	if (micros1000s>=1000){
-		millisSeconds++;						// Increments milliseconds counter every 1000s of microseconds
-		micros1000s -= 1000;					// Adds the any extra microseconds to the rolling counter
-		elapsed ++;
-	}
+	ISR_TMR1CA = 0;
 }
 ISR(TIMER1_COMPB_vect){							// Timer/Counter 1 Compare Match B
 	ISR_TMR1CB = 0;
