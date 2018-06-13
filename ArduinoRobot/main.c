@@ -6,8 +6,11 @@
 #define INPUT							0		// Used for setPin() function
 #define HIGH							1		// Used for setPin() function
 #define LOW								0		// Used for setPin() function
-#define PULLUP_ENABLED					1		// Used for setPin() function
+#define PULLUP							1		// Used for setPin() function
 #define NO_PULLUP						0		// Used for setPin() function
+
+#define READ							1		// Used for I2C direction bit
+#define WRITE							1		// Used for I2C direction bit
 
 #define SUPERFAST						1		// Used to set Max PWM frequency in init8BitsPWM() function (Max 62500 Hz)
 #define FAST							8		// Used to set Max PWM frequency in init8BitsPWM() function (Max 7812 Hz)
@@ -15,8 +18,8 @@
 #define SLOW							256		// Used to set Max PWM frequency in init8BitsPWM() function (Max 244 Hz)
 #define SUPERSLOW						1024	// Used to set Max PWM frequency in init8BitsPWM() function (Max 61 Hz)
 
-#define FALLING							0		// Used for Input Capture Edge Selection
-#define RISING							1		// Used for Input Capture Edge Selection
+#define FALLING							1		// Used for Input Capture Edge Selection
+#define RISING							0		// Used for Input Capture Edge Selection
 
 #define TIMER0							0		// Used for PWM initialization
 #define TIMER1							1		// Used for PWM initialization
@@ -75,25 +78,32 @@ const uint16_t PIDAttenuation			= 1000;	// Reduce the overall influence of the P
 ////////////////////////////// VARIABLES DECLARATION //////////////////////////////
 volatile uint16_t result_ADC			= 0;	// ADC result holder (updated by ISR)
 
+volatile uint8_t USARTData				= 0;	// Holds USART received data
+
+volatile uint8_t I2CData				= 0;	// Holds I2C data (either transmit or receive)
+volatile uint8_t I2CRemoteAddress		= 0;	// I2C address of the slave to contact
+uint8_t I2CDataSize						= 0;	// Size of the packet to transmit
+
 volatile uint32_t pulsesEncCHA			= 0;	// Pulse counter for encoder channel A (updated by ISR)
 volatile uint32_t pulsesEncCHB			= 0;	// Pulse counter for encoder channel B (updated by ISR)
 volatile uint8_t lastInterruptChannel	= 0;	// Which encoder channel triggered the last external interrupt (updated by ISR)
 uint16_t deltaTimeCHA					= 0;	// Time between encoder Channel A pulses
 uint16_t deltaTimeCHB					= 0;	// Time between encoder Channel A pulses
+uint16_t HZCHA							= 0;	// Encoder channel A frequency
+uint16_t HZCHB							= 0;	// Encoder channel A frequency
 
 volatile uint32_t millisSeconds			= 0;	// Elapsed milliseconds since boot (updated by ISR)
-volatile uint16_t elapsed				= 0;
 volatile uint32_t microsSeconds			= 0;	// Elapsed microseconds since boot (updated by ISR)
 volatile uint16_t micros1000s			= 0;	// Rolling counter for 1000s of microseconds (updated by ISR)
-volatile uint16_t inputCaptureTimeCHA	= 0;	// Input capture timestamp (updated by ISR)
-volatile uint16_t inputCaptureTimeCHB	= 0;	// Input capture timestamp (updated by ISR)
-volatile uint16_t prevCaptureTimeCHA	= 0;	// Previous Input capture timestamp (updated by ISR)
-volatile uint16_t prevCaptureTimeCHB	= 0;	// Previous Input capture timestamp (updated by ISR)
+volatile uint16_t inCaptTimeCHA			= 0;	// Input capture timestamp for encoder channel A (updated by ISR)
+volatile uint16_t inCaptTimeCHB			= 0;	// Input capture timestamp for encoder channel B (updated by ISR)
+volatile uint16_t prevCaptTimeCHA		= 0;	// Previous Input capture timestamp for encoder channel A (updated by ISR)
+volatile uint16_t prevCaptTimeCHB		= 0;	// Previous Input capture timestamp for encoder channel B (updated by ISR)
 
 uint16_t prescalerPWM					= 0;	// Input Capture time unit in nanoseconds
 uint16_t prescalerTimer					= 0;	// Input Capture time unit in nanoseconds
 uint16_t prescalerInputCapture			= 0;	// Input Capture time unit in nanoseconds
-uint16_t inputCaptureTimeUnit			= 0;	// Time unit in nanoseconds
+uint16_t inCaptTimeUnit					= 0;	// Time unit in microseconds
 
 uint8_t errorPin						= 18;	// Pin used to control the error LED
 uint8_t errorCode						= 0;
@@ -110,7 +120,7 @@ void setPin(uint8_t pin, uint8_t direction, uint8_t option);
 void initADC();
 void startADC(uint8_t channel);
 
-void init8BitsPWM(uint8_t timer, uint16_t maxFrequency);
+void initPWM(uint8_t timer, uint16_t maxFrequency);
 void setPWM(uint8_t pinPWM, uint8_t valuePWM);
 
 void initErrorPin(uint8_t errorPin);
@@ -118,26 +128,38 @@ void setError(uint8_t code);
 void clearError();
 
 void initTimer();
-void initInputCapture();
+void initInputCapture( uint16_t prescaler, uint8_t edge);
+uint16_t calculateFrequency(uint16_t deltaTime);
+
+void initUSART(uint16_t baudrate);
+void transmitUSART(uint8_t data);
+
+void initI2C();
+void I2CTransmit(uint8_t slaveAddress, uint8_t READorWRITE, uint8_t data);
 ////////////////////////////// END FUNCTIONS DECLARATION //////////////////////////
 
 int main (void){
 ////////////////////////////// SETUP //////////////////////////////////////////////
 	//********** Pins configuration **********
-	DDRB	= 0b00000000;						// Set pin direction (1=OUTPUT, 0=INPUT)
+	DDRB	= 0b00000110;						// Set pin direction (1=OUTPUT, 0=INPUT)
 	DDRC	= 0b00000000;						//
 	DDRD	= 0b11111111;						//
 	
-	PORTB	= 0b00000000;						// Set pin state :
+	PORTB	= 0b00000001;						// Set pin state :
 	PORTC	= 0b00000000;						// if OUTPUT: 1= HIGH, 0= LOWs
 	PORTD	= 0b00000000;						// if INPUT: 1= Pull-up on, 0= Pull-up off
 	//********************
 
 	//********** Services Initialization **********
+	initErrorPin(errorPin);						// Mandatory services
+	initTimer();								//
+	
 	initADC();
-	initErrorPin(errorPin);
-	init8BitsPWM(TIMER0, SUPERSLOW);		// Initialize PWM Timer with frequency limiter (Hz)
-	initTimer();
+	initPWM(TIMER0, SUPERSLOW);					// Initialize PWM Timer with frequency limiter (Hz)
+	initInputCapture(SUPERSLOW, RISING);
+	//initI2C();
+	initUSART(9600);
+
 	sei();										// Enable Global Interrupt
 	//********************
 ////////////////////////////// END SETUP /////////////////////////////////////////
@@ -148,20 +170,23 @@ int main (void){
 		if(ISR_TMR1CAPT){
 			switch (lastInterruptChannel){
 				case 0:
-					if (prevCaptureTimeCHA>inputCaptureTimeCHA){						// Prevents error when counter overflows
-						deltaTimeCHA = (65536-prevCaptureTimeCHA)+inputCaptureTimeCHA;	// 65536 = MAX counter value
+					if (prevCaptTimeCHA>inCaptTimeCHA){							// Prevents error when delteTime counter overflows
+						deltaTimeCHA = (65536-prevCaptTimeCHA)+inCaptTimeCHA;	// 65536 = MAX counter value
 					}else{
-						deltaTimeCHA = inputCaptureTimeCHA-prevCaptureTimeCHA;
+						deltaTimeCHA = inCaptTimeCHA-prevCaptTimeCHA;
 					}
+					HZCHA = calculateFrequency(deltaTimeCHA);
 				break;
 				case 1:
-					if (prevCaptureTimeCHB>inputCaptureTimeCHB){
-						deltaTimeCHB = (65536-prevCaptureTimeCHB)+inputCaptureTimeCHB;
+					if (prevCaptTimeCHB>inCaptTimeCHB){
+						deltaTimeCHB = (65536-prevCaptTimeCHB)+inCaptTimeCHB;
 					}else{
-						deltaTimeCHB = inputCaptureTimeCHB-prevCaptureTimeCHB;
+						deltaTimeCHB = inCaptTimeCHB-prevCaptTimeCHB;
 					}
+					HZCHB = calculateFrequency(deltaTimeCHB);
 				break;
 			}
+			ISR_TMR1CAPT = 0;
 		}
 		if(ISR_ADC){
 			switch (channelADCinUse){
@@ -185,11 +210,9 @@ int main (void){
 		if (!ISR_ADC){
 			startADC(0);
 		}
-		setPWM(11, result_ADC>>2);
-		if (elapsed>1000){
-			PORTB ^= (1<<PORTB4);
-			elapsed -=1000;
-		}
+		setPWM(12, result_ADC>>2);
+		//I2CTransmit(128, READ, 255);
+		transmitUSART(result_ADC>>2);
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////
 	}
 	return 0;
@@ -206,12 +229,12 @@ void setPin(uint8_t pin, uint8_t direction, uint8_t option){
 	if (pin>=14 && pin<= 19){						// Determine BIT order and PORT based on Pin number (Pin 19 is PORTB, BIT 5)
 		bitOrder = pin-14;
 		DDRB |= (direction<<bitOrder);				// Set Pin as 1=output; 0=input
-		PORTD |= (option<<bitOrder);				// Pin High/Low (output) or Pull-up enabled/disabled (input)
+		PORTB |= (option<<bitOrder);				// Pin High/Low (output) or Pull-up enabled/disabled (input)
 	}
 	if (pin>=23 && pin<= 28){						// Determine BIT order and PORT based on Pin number (Pin 25 is PORTC, Bit 2)
 		bitOrder = pin-23;
 		DDRC |= (direction<<bitOrder);				// Set Pin as 1=output; 0=input
-		PORTD |= (option<<bitOrder);				// Pin High/Low (output) or Pull-up enabled/disabled (input)
+		PORTC |= (option<<bitOrder);				// Pin High/Low (output) or Pull-up enabled/disabled (input)
 	}
 }
 
@@ -221,6 +244,7 @@ void initADC(){
 }
 void startADC(uint8_t channel){
 	if (channel<8){
+		setPin(23+channel, INPUT, NO_PULLUP);
 		if (ISR_ADC){									// Prevent new conversion if previous is not cleared
 			setError(1);								// Set error in Error manager (1 = error in ADC)
 		}else{
@@ -245,7 +269,7 @@ void clearError(){
 	setPin(errorPin, OUTPUT,LOW);
 }
 
-void init8BitsPWM(uint8_t timer, uint16_t prescaler){
+void initPWM(uint8_t timer, uint16_t prescaler){
 	prescalerPWM = prescaler;
 	switch(timer){
 		case 0:
@@ -360,9 +384,35 @@ void setPWM(uint8_t pinPWM, uint8_t valuePWM){
 
 void initTimer(uint16_t prescaler){
 	prescalerTimer = prescaler;
-	TCCR2A = (1<<WGM21);						// Timer1 CTC mode OCR2A as MAX value (WGMx)						
+	TCCR2A = (1<<WGM21);						// Timer1 CTC mode OCR2A as MAX value (WGMx)
+	switch (prescaler){
+		case SUPERFAST:
+			TCCR2B = (0<<CS22) | (0<<CS21) | (1<<CS20);	// Set prescaler on clock (no prescaler)
+		break;
+		case FAST:
+			TCCR2B = (0<<CS22) | (1<<CS21) | (0<<CS20);	// Set prescaler on clock (CLKio/8)
+		break;
+		case 32:
+			TCCR2B = (0<<CS22) | (1<<CS21) | (1<<CS20);	// Set prescaler on clock (CLKio/32)
+		break;
+		case MEDIUM:
+			TCCR2B = (1<<CS22) | (0<<CS21) | (0<<CS20);	// Set prescaler on clock (CLKio/64)
+		break;
+		case 128:
+			TCCR2B = (1<<CS22) | (0<<CS21) | (1<<CS20);	// Set prescaler on clock (CLKio/128)
+		break;
+		case SLOW:
+			TCCR2B = (1<<CS22) | (1<<CS21) | (0<<CS20);	// Set prescaler on clock (CLKio/256)
+		break;
+		case SUPERSLOW:
+			TCCR2B = (1<<CS22) | (1<<CS21) | (1<<CS20);	// Set prescaler on clock (CLKio/1024)
+		break;
+		default:
+			TCCR2B = (1<<CS22) | (1<<CS21) | (1<<CS20);	// Default to SUPERSLOW
+		break;
+	}
 	TCCR2B = (1<<CS21);							// 8 prescaler (CTC)
-	uint8_t CTCTopValue = (F_CPU/(2*prescaler*(1000000/(TIMEUNIT*2))))-1;	// (F_CPU/2*prescaler*Frequency)-1
+	uint8_t CTCTopValue = (F_CPU/(2*prescalerTimer*(1000000/(TIMEUNIT*2))))-2;	// (F_CPU/2*prescaler*Frequency)-2. -2 instaed of -1 to compensate for couter roll-over (back to 0).
 	if (CTCTopValue>255){						// 8 bits timer, TOP value cannot exceed 255
 		setError(6);
 	}else{
@@ -371,17 +421,67 @@ void initTimer(uint16_t prescaler){
 		TCNT2 = 0;								// Timer1 counter reset
 	}
 }
-void initInputCapture(uint16_t prescaler){
+void initInputCapture(uint16_t prescaler, uint8_t edge){
 	prescalerInputCapture = prescaler;
-	inputCaptureTimeUnit = 
-	TCCR1B = (1<<ICNC1) | (1<<ICES1) | (1<<CS10);	// Input capture noise canceler enabled, detect on rising edge, no prescaling
+	inCaptTimeUnit = 1000000/(F_CPU/prescalerInputCapture);
+	TCCR1B = (1<<ICNC1) | (edge<<ICES1);				// Input capture noise canceler enabled, detect on selected signal edge
+	switch (prescaler){
+		case SUPERFAST:
+		TCCR1B |= (0<<CS12) | (0<<CS11) | (1<<CS10);	// Set prescaler on clock (no prescaler)
+		break;
+		case FAST:
+		TCCR1B |= (0<<CS12) | (1<<CS11) | (0<<CS10);	// Set prescaler on clock (CLKio/8)
+		break;
+		case MEDIUM:
+		TCCR1B |= (0<<CS12) | (1<<CS11) | (1<<CS10);	// Set prescaler on clock (CLKio/64)
+		break;
+		case SLOW:
+		TCCR1B |= (1<<CS12) | (0<<CS11) | (1<<CS10);	// Set prescaler on clock (CLKio/256)
+		break;
+		case SUPERSLOW:
+		TCCR1B |= (01<CS12) | (0<<CS11) | (1<<CS10);	// Set prescaler on clock (CLKio/1024)
+		break;
+		default:
+		TCCR1B |= (0<<CS12) | (0<<CS11) | (1<<CS10);	// Default to SUPERSLOW
+		break;
+	}
 	TIMSK1 = (1<<ICIE1);
 }
-
-uint8_t calculateFrequency(uint16_t deltaTime){
-	uint8_t result = 0;
-	result = 1/deltaTime;
+uint16_t calculateFrequency(uint16_t deltaTime){
+	uint16_t result = 0;
+	result = 1000000/(deltaTime*inCaptTimeUnit);
 	return result;
+}
+
+void initI2C(){
+	TWBR = 18;									// Determines I2C frequency
+	TWCR |= (1<<TWEN) | (1<<TWIE);				// Enables I2C and I2C interrupts
+	TWSR |= (1<<TWPS0);							// I2C prescaler
+	TWAR = 2;									// Slave address
+	TWDR = 0;									// Reset I2C Data register
+}
+void I2CTransmit(uint8_t slaveAddress, uint8_t READorWRITE, uint8_t data){
+	if(slaveAddress>128){
+		setError(6);
+	}else{
+		I2CRemoteAddress = (slaveAddress<<1) & (READorWRITE | 0b11111110);
+		TWDR = I2CRemoteAddress;
+		TWCR |= (1<<TWSTA) | (0<<TWSTO) | (1<<TWINT);
+	}
+}
+
+void initUSART(uint16_t baudrate){
+	UBRR0 = 103;
+	UCSR0B = (1<<RXCIE0) | (1<<TXCIE0) | (1<<RXEN0) | (1<<TXEN0) | (0<<UCSZ02);
+	UCSR0C = (1<<UCSZ01) | (1<<UCSZ00);
+}
+void transmitUSART(uint8_t data){
+	if(ISR_USARTTX){
+		setError(12);
+	}else{
+		ISR_USARTTX = 1;
+		UDR0 = data;
+	}
 }
 ////////////////////////////// END FUNCTIONS DEFINITIONS //////////////////////////
 
@@ -412,7 +512,6 @@ ISR(TIMER2_COMPA_vect){							// Timer/Counter 2 Compare Match A
 	if (micros1000s>=1000){
 		millisSeconds++;						// Increments milliseconds counter every 1000s of microseconds
 		micros1000s -= 1000;					// Adds the any extra microseconds to the rolling counter
-		elapsed ++;
 	}
 }
 ISR(TIMER2_COMPB_vect){							// Timer/Counter 2 Compare Match B
@@ -423,14 +522,14 @@ ISR(TIMER2_OVF_vect){							// Timer/Counter 2 Overflow
 }
 ISR(TIMER1_CAPT_vect){							// Timer/Counter 1 Capture Event
 	ISR_TMR1CAPT = 1;
-	switch (lastInterruptChannel){						//Check which encoder channel sent triggered the Input Capture
+	switch (lastInterruptChannel){				// Check which encoder channel sent triggered the Input Capture
 		case 0:
-			prevCaptureTimeCHA = inputCaptureTimeCHA;	// Move current timestamp to the previous one
-			inputCaptureTimeCHA = ICR1H;				// Update current timestamp
+			prevCaptTimeCHA = inCaptTimeCHA;	// Move current timestamp to the previous one
+			inCaptTimeCHA = ICR1;				// Update current timestamp
 		break;
 		case 1:
-			prevCaptureTimeCHB = inputCaptureTimeCHB;	// Move current timestamp to the previous one
-			inputCaptureTimeCHB = ICR1H;				// Update current timestamp
+			prevCaptTimeCHB = inCaptTimeCHB;	// Move current timestamp to the previous one
+			inCaptTimeCHB = ICR1;				// Update current timestamp
 		break;
 	}
 }
@@ -441,7 +540,7 @@ ISR(TIMER1_COMPB_vect){							// Timer/Counter 1 Compare Match B
 	ISR_TMR1CB = 0;
 }
 ISR(TIMER1_OVF_vect){							// Timer/Counter 1 Overflow
-	ISR_TMR1OVF = 0;
+	ISR_TMR1OVF = 1;
 }
 ISR(TIMER0_COMPA_vect){							// Timer/Counter 0 Compare Match A
 	ISR_TMR0CA = 0;
@@ -459,7 +558,7 @@ ISR(USART_RX_vect){								// USART Rx Complete
 	ISR_USARTRX = 0;
 }
 ISR(USART_UDRE_vect){							// USART Data Register Empty
-	ISR_USARTUDRE = 0;
+	ISR_USARTUDRE = 0;							// Data register empty
 }
 ISR(USART_TX_vect){								// USART TX Complete
 	ISR_USARTTX = 0;
@@ -476,6 +575,32 @@ ISR(ANALOG_COMP_vect){							// Analog Comparator
 }
 ISR(TWI_vect){									// 2-wire Serial Interface
 	ISR_TWI = 0;
+	switch(TWSR & 0b11111100){					// Masking prescaler bits in TWSR
+		case 8:									// A START condition has been transmitted
+			TWDR = I2CRemoteAddress;
+			TWCR |= (0<<TWSTA) | (0<<TWSTO) | (1<<TWINT);
+		break;
+		case 10:								// A repeated START condition has been transmitted
+		break;
+		case 18:								// SLA+W has been transmitted; ACK has been received
+			TWDR = I2CData;
+			TWCR |= (0<<TWSTA) | (0<<TWSTO) | (1<<TWINT);
+		break;
+		case 20:								// SLA+W has been transmitted; NOT ACK has been received
+			setError(10);
+		break;
+		case 28:								// Data byte has been transmitted; ACK has been received
+			TWCR |= (0<<TWSTA) | (1<<TWSTO) | (1<<TWINT);
+		break;
+		case 30:								// Data byte has been transmitted; NOT ACK has been received
+			setError(10);
+		break;
+		case 38:								// Arbitration lost in SLA+W or data bytes
+		break;
+		default:
+			setError(10);
+		break;		
+	}
 }
 ISR(SPM_READY_vect){							// Store Program Memory Ready
 	ISR_SPM = 0;
