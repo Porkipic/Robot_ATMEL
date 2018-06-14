@@ -1,6 +1,9 @@
 ////////////////////////////// DEFINITIONS ////////////////////////////////////////
 #define F_CPU							16000000UL	// Define CPU speed
 #define TIMEUNIT						10			// Time unit in us
+#define RXBufferSize					8			// USART buffer size
+#define BAUDRATE						9600		// USART baudrate
+#define UBRR							((F_CPU/100)/(16*(BAUDRATE/100)))-1
 
 #define OUTPUT							1		// Used for setPin() function
 #define INPUT							0		// Used for setPin() function
@@ -24,6 +27,27 @@
 #define TIMER0							0		// Used for PWM initialization
 #define TIMER1							1		// Used for PWM initialization
 #define TIMER2							2		// Used for PWM initialization
+
+#define USART							0		// Used for PWM initialization
+#define TIMER1							1		// Used for PWM initialization
+#define TIMER2							2		// Used for PWM initialization
+
+//********** Error Messages **********
+#define INVALID_ADC_CHANNEL				10
+#define PREVIOUS_ADC_NOT_READ			11
+
+#define INVALID_TIMER					20
+#define INVALID_PWM_PIN					21
+#define INVALID_TIMER_TOP_VALUE			22
+
+#define I2C_INVALID_SLAVE_ADDRESS		30
+#define I2C_SLA_NOK_RESPONSE			31
+#define I2C_DATA_NOK_RESPONSE			32
+#define I2C_UNKNOWN_ERROR				33
+
+#define USART_TX_IN_PROGRESS			40
+#define USART_RX_BUFFER_FULL			41
+//********************
 
 #define AHI								11		// HIP4081 input pins
 #define ALI								12		// HIP4081 input pins
@@ -78,7 +102,11 @@ const uint16_t PIDAttenuation			= 1000;	// Reduce the overall influence of the P
 ////////////////////////////// VARIABLES DECLARATION //////////////////////////////
 volatile uint16_t result_ADC			= 0;	// ADC result holder (updated by ISR)
 
-volatile uint8_t USARTData				= 0;	// Holds USART received data
+
+//const uint8_t RXBufferSize				= 8;	// Size of the buffer;
+volatile uint8_t RXData[RXBufferSize];			// Array holding USART received data
+volatile uint8_t RXBufferOutPos			= 0;	// Position for the data going OUT the buffer
+volatile uint8_t RXBufferAmount			= 0;	// Number of elements in the buffer
 
 volatile uint8_t I2CData				= 0;	// Holds I2C data (either transmit or receive)
 volatile uint8_t I2CRemoteAddress		= 0;	// I2C address of the slave to contact
@@ -142,7 +170,7 @@ int main (void){
 ////////////////////////////// SETUP //////////////////////////////////////////////
 	//********** Pins configuration **********
 	DDRB	= 0b00000110;						// Set pin direction (1=OUTPUT, 0=INPUT)
-	DDRC	= 0b00000000;						//
+	DDRC	= 0b11111111;						//
 	DDRD	= 0b11111111;						//
 	
 	PORTB	= 0b00000001;						// Set pin state :
@@ -200,19 +228,29 @@ int main (void){
 					currentHBridge = result_ADC;
 				break;
 				default:
-					setError(4);
+					setError(INVALID_ADC_CHANNEL);
 				break;
 			}
 			ISR_ADC = 0;
+		}
+		if(RXBufferAmount>0){
+			if(RXBufferOutPos < RXBufferSize){
+				RXBufferOutPos ++;
+			}else{
+				RXBufferOutPos = 1;
+			}
+			// Do things with received data: RXData[RXBufferOutPos-1];
+			transmitUSART(RXData[RXBufferOutPos-1]);
+			RXBufferAmount --;
 		}
 		//********************
 		
 		if (!ISR_ADC){
 			startADC(0);
 		}
-		setPWM(12, result_ADC>>2);
+		//setPWM(12, result_ADC>>2);
 		//I2CTransmit(128, READ, 255);
-		transmitUSART(result_ADC>>2);
+		//transmitUSART(result_ADC>>2);
 ////////////////////////////// END MAIN LOOP /////////////////////////////////////
 	}
 	return 0;
@@ -246,14 +284,14 @@ void startADC(uint8_t channel){
 	if (channel<8){
 		setPin(23+channel, INPUT, NO_PULLUP);
 		if (ISR_ADC){									// Prevent new conversion if previous is not cleared
-			setError(1);								// Set error in Error manager (1 = error in ADC)
+			setError(PREVIOUS_ADC_NOT_READ);			// Set error in Error manager (1 = error in ADC)
 		}else{
 			ADMUX = (1 << REFS0) | (channel << MUX0);	// Set voltage reference (VCC), set ADC channel
 			ADCSRA |= (1 << ADSC);						// Start conversion
 			channelADCinUse = channel;
 		}
 	}else{
-		setError(5);
+		setError(INVALID_ADC_CHANNEL);
 	}
 }
 
@@ -321,7 +359,7 @@ void initPWM(uint8_t timer, uint16_t prescaler){
 			OCR1A = 0;												// Reset Compare A value
 			OCR1B = 0;												// Reset Compare B value
 		default:
-			setError(5);
+			setError(INVALID_TIMER);
 		break;
 		
 	}
@@ -377,14 +415,14 @@ void setPWM(uint8_t pinPWM, uint8_t valuePWM){
 			setPin(15, OUTPUT, LOW);
 			TCCR1A &= ~(1<<COM1B1);					// Deactivate PWM on pin 16
 			setPin(16, OUTPUT, LOW);
-			setError(3);
+			setError(INVALID_PWM_PIN);
 		break;
 	}
 }
 
 void initTimer(uint16_t prescaler){
 	prescalerTimer = prescaler;
-	TCCR2A = (1<<WGM21);						// Timer1 CTC mode OCR2A as MAX value (WGMx)
+	TCCR2A = (1<<WGM21);								// Timer1 CTC mode OCR2A as MAX value (WGMx)
 	switch (prescaler){
 		case SUPERFAST:
 			TCCR2B = (0<<CS22) | (0<<CS21) | (1<<CS20);	// Set prescaler on clock (no prescaler)
@@ -411,14 +449,14 @@ void initTimer(uint16_t prescaler){
 			TCCR2B = (1<<CS22) | (1<<CS21) | (1<<CS20);	// Default to SUPERSLOW
 		break;
 	}
-	TCCR2B = (1<<CS21);							// 8 prescaler (CTC)
+	TCCR2B = (1<<CS21);									// 8 prescaler (CTC)
 	uint8_t CTCTopValue = (F_CPU/(2*prescalerTimer*(1000000/(TIMEUNIT*2))))-2;	// (F_CPU/2*prescaler*Frequency)-2. -2 instaed of -1 to compensate for couter roll-over (back to 0).
-	if (CTCTopValue>255){						// 8 bits timer, TOP value cannot exceed 255
-		setError(6);
+	if (CTCTopValue>255){								// 8 bits timer, TOP value cannot exceed 255
+		setError(INVALID_TIMER_TOP_VALUE);
 	}else{
-		OCR2A = CTCTopValue;					// Set OCR2A to calculated TOP value			
-		TIMSK2 = (1<<OCIE2A);					// Enable interrupt when counter reaches ICR1
-		TCNT2 = 0;								// Timer1 counter reset
+		OCR2A = CTCTopValue;							// Set OCR2A to calculated TOP value			
+		TIMSK2 = (1<<OCIE2A);							// Enable interrupt when counter reaches ICR1
+		TCNT2 = 0;										// Timer1 counter reset
 	}
 }
 void initInputCapture(uint16_t prescaler, uint8_t edge){
@@ -462,7 +500,7 @@ void initI2C(){
 }
 void I2CTransmit(uint8_t slaveAddress, uint8_t READorWRITE, uint8_t data){
 	if(slaveAddress>128){
-		setError(6);
+		setError(I2C_INVALID_SLAVE_ADDRESS);
 	}else{
 		I2CRemoteAddress = (slaveAddress<<1) & (READorWRITE | 0b11111110);
 		TWDR = I2CRemoteAddress;
@@ -471,13 +509,13 @@ void I2CTransmit(uint8_t slaveAddress, uint8_t READorWRITE, uint8_t data){
 }
 
 void initUSART(uint16_t baudrate){
-	UBRR0 = 103;
+	UBRR0 = UBRR;
 	UCSR0B = (1<<RXCIE0) | (1<<TXCIE0) | (1<<RXEN0) | (1<<TXEN0) | (0<<UCSZ02);
 	UCSR0C = (1<<UCSZ01) | (1<<UCSZ00);
 }
 void transmitUSART(uint8_t data){
 	if(ISR_USARTTX){
-		setError(12);
+		setError(USART_TX_IN_PROGRESS);
 	}else{
 		ISR_USARTTX = 1;
 		UDR0 = data;
@@ -555,10 +593,20 @@ ISR(SPI_STC_vect){								// SPI Serial Transfer Complete
 	ISR_SPI = 0;
 }
 ISR(USART_RX_vect){								// USART Rx Complete
-	ISR_USARTRX = 0;
+	ISR_USARTRX = 0;							// Incoming RX flag
+	if(RXBufferAmount >= RXBufferSize){
+		setError(USART_RX_BUFFER_FULL);
+	}else{
+		if((RXBufferOutPos+RXBufferAmount) < RXBufferSize){
+			RXData[RXBufferOutPos+RXBufferAmount] = UDR0;	// Transfer register value to RX Buffer
+		}else{
+			RXData[(RXBufferOutPos+RXBufferAmount)-RXBufferSize] = UDR0;		// Transfer register value to RX Buffer
+		}
+		RXBufferAmount ++;						// Increment element counter
+	}
 }
 ISR(USART_UDRE_vect){							// USART Data Register Empty
-	ISR_USARTUDRE = 0;							// Data register empty
+	ISR_USARTUDRE = 0;
 }
 ISR(USART_TX_vect){								// USART TX Complete
 	ISR_USARTTX = 0;
@@ -587,18 +635,18 @@ ISR(TWI_vect){									// 2-wire Serial Interface
 			TWCR |= (0<<TWSTA) | (0<<TWSTO) | (1<<TWINT);
 		break;
 		case 20:								// SLA+W has been transmitted; NOT ACK has been received
-			setError(10);
+			setError(I2C_SLA_NOK_RESPONSE);
 		break;
 		case 28:								// Data byte has been transmitted; ACK has been received
 			TWCR |= (0<<TWSTA) | (1<<TWSTO) | (1<<TWINT);
 		break;
 		case 30:								// Data byte has been transmitted; NOT ACK has been received
-			setError(10);
+			setError(I2C_DATA_NOK_RESPONSE);
 		break;
 		case 38:								// Arbitration lost in SLA+W or data bytes
 		break;
 		default:
-			setError(10);
+			setError(I2C_UNKNOWN_ERROR);
 		break;		
 	}
 }
