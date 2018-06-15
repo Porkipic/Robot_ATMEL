@@ -1,7 +1,7 @@
 ////////////////////////////// DEFINITIONS ////////////////////////////////////////
 #define F_CPU							16000000UL	// Define CPU speed
 #define TIMEUNIT						10			// Time unit in us
-#define RXBufferSize					8			// USART buffer size
+#define USARTBUFFER						8			// USART buffer size
 #define BAUDRATE						9600		// USART baudrate
 #define UBRR							((F_CPU/100)/(16*(BAUDRATE/100)))-1
 
@@ -35,6 +35,7 @@
 //********** Error Messages **********
 #define INVALID_ADC_CHANNEL				10
 #define PREVIOUS_ADC_NOT_READ			11
+#define ADC_PREVIOUS_NOT_FINISHED		12
 
 #define INVALID_TIMER					20
 #define INVALID_PWM_PIN					21
@@ -45,8 +46,9 @@
 #define I2C_DATA_NOK_RESPONSE			32
 #define I2C_UNKNOWN_ERROR				33
 
-#define USART_TX_IN_PROGRESS			40
+#define USART_TX_BUSY					40
 #define USART_RX_BUFFER_FULL			41
+#define USART_TX_BUFFER_FULL			42
 //********************
 
 #define AHI								11		// HIP4081 input pins
@@ -59,6 +61,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <stdlib.h>
+#include <string.h>
 ////////////////////////////// END INCLUDES ///////////////////////////////////////
 
 ////////////////////////////// ISR FLAGS //////////////////////////////////////////
@@ -102,11 +106,12 @@ const uint16_t PIDAttenuation			= 1000;	// Reduce the overall influence of the P
 ////////////////////////////// VARIABLES DECLARATION //////////////////////////////
 volatile uint16_t result_ADC			= 0;	// ADC result holder (updated by ISR)
 
-
-//const uint8_t RXBufferSize				= 8;	// Size of the buffer;
-volatile uint8_t RXData[RXBufferSize];			// Array holding USART received data
+volatile uint8_t RXData[USARTBUFFER];			// Array holding USART received data
 volatile uint8_t RXBufferOutPos			= 0;	// Position for the data going OUT the buffer
 volatile uint8_t RXBufferAmount			= 0;	// Number of elements in the buffer
+volatile uint8_t TXData[USARTBUFFER];			// Array holding USART received data
+volatile uint8_t TXBufferOutPos			= 0;	// Position for the data going OUT the buffer
+volatile uint8_t TXBufferAmount			= 0;	// Number of elements in the buffer
 
 volatile uint8_t I2CData				= 0;	// Holds I2C data (either transmit or receive)
 volatile uint8_t I2CRemoteAddress		= 0;	// I2C address of the slave to contact
@@ -217,6 +222,7 @@ int main (void){
 			ISR_TMR1CAPT = 0;
 		}
 		if(ISR_ADC){
+			result_ADC = ADC;							// Transfer ADC result in holder variable
 			switch (channelADCinUse){
 				case 0:
 					temperatureHBridge = result_ADC;
@@ -233,21 +239,36 @@ int main (void){
 			}
 			ISR_ADC = 0;
 		}
-		if(RXBufferAmount>0){
-			if(RXBufferOutPos < RXBufferSize){
-				RXBufferOutPos ++;
+		if(ISR_USARTRX){
+			if(RXBufferAmount<USARTBUFFER){
+				if(RXBufferOutPos < USARTBUFFER){
+					RXBufferOutPos ++;
+				}else{
+					RXBufferOutPos = 1;
+				}
+				// Do things with received data: RXData[RXBufferOutPos-1];
+				//PORTC = RXData[RXBufferOutPos-1];
+				transmitUSART(1234);
+				RXBufferAmount --;
 			}else{
-				RXBufferOutPos = 1;
+				setError(USART_RX_BUFFER_FULL);
 			}
-			// Do things with received data: RXData[RXBufferOutPos-1];
-			transmitUSART(RXData[RXBufferOutPos-1]);
-			RXBufferAmount --;
+		}
+		if(ISR_USARTTX){
+			if(TXBufferAmount>0){
+				transmitUSART(TXData[TXBufferOutPos]);
+				if(RXBufferOutPos < USARTBUFFER){
+					RXBufferOutPos ++;
+					}else{
+					RXBufferOutPos = 1;
+				}
+			}else{
+				setError(USART_RX_BUFFER_FULL);
+			}
 		}
 		//********************
 		
-		if (!ISR_ADC){
-			startADC(0);
-		}
+		startADC(0);
 		//setPWM(12, result_ADC>>2);
 		//I2CTransmit(128, READ, 255);
 		//transmitUSART(result_ADC>>2);
@@ -281,17 +302,17 @@ void initADC(){
 	ADCSRA = (1 << ADEN) | (1 << ADIE) | (1 << ADPS0) | (1 << ADPS1) | (1 << ADPS2);	// Enable ADC, Enable Interrupt, Set prescaler to 128
 }
 void startADC(uint8_t channel){
-	if (channel<8){
-		setPin(23+channel, INPUT, NO_PULLUP);
-		if (ISR_ADC){									// Prevent new conversion if previous is not cleared
-			setError(PREVIOUS_ADC_NOT_READ);			// Set error in Error manager (1 = error in ADC)
-		}else{
+	if(ISR_ADC){
+		setError(ADC_PREVIOUS_NOT_FINISHED);
+	}else{
+		if (channel<8){
+			setPin(23+channel, INPUT, NO_PULLUP);
 			ADMUX = (1 << REFS0) | (channel << MUX0);	// Set voltage reference (VCC), set ADC channel
 			ADCSRA |= (1 << ADSC);						// Start conversion
 			channelADCinUse = channel;
+		}else{
+			setError(INVALID_ADC_CHANNEL);
 		}
-	}else{
-		setError(INVALID_ADC_CHANNEL);
 	}
 }
 
@@ -514,12 +535,51 @@ void initUSART(uint16_t baudrate){
 	UCSR0C = (1<<UCSZ01) | (1<<UCSZ00);
 }
 void transmitUSART(uint8_t data){
+	if(TXBufferAmount>=USARTBUFFER){
+		setError(USART_TX_BUFFER_FULL);
+	}else{
+		if((TXBufferOutPos+TXBufferAmount) < USARTBUFFER){
+			TXData[TXBufferOutPos+TXBufferAmount] = UDR0;	// Transfer register value to RX Buffer
+		}else{
+			TXData[(TXBufferOutPos+TXBufferAmount)-USARTBUFFER] = UDR0;		// Transfer register value to RX Buffer
+		}
+		TXBufferAmount ++;
+	}
 	if(ISR_USARTTX){
-		setError(USART_TX_IN_PROGRESS);
+		setError(USART_TX_BUSY);
 	}else{
 		ISR_USARTTX = 1;
 		UDR0 = data;
+		TXBufferAmount --;
+		if(TXBufferOutPos < USARTBUFFER){
+			TXBufferOutPos ++;
+		}else{
+			TXBufferOutPos = 1;
+		}
 	}
+}
+uint8_t digitsInInt(uint32_t number){
+	uint8_t result = 0;
+	if(number<10){
+		result = 1;
+	} else if(number<100){
+		result = 2;
+	} else if(number<1000){
+		result = 3;
+	} else if(number<10000){
+		result = 4;
+	} else if(number<100000){
+		result = 5;
+	} else if(number<1000000){
+		result = 6;
+	} else if(number<10000000){
+		result = 7;
+	} else if(number<100000000){
+		result = 8;
+	} else if(number<1000000000){
+		result = 9;
+	} 
+	return result;
 }
 ////////////////////////////// END FUNCTIONS DEFINITIONS //////////////////////////
 
@@ -593,27 +653,16 @@ ISR(SPI_STC_vect){								// SPI Serial Transfer Complete
 	ISR_SPI = 0;
 }
 ISR(USART_RX_vect){								// USART Rx Complete
-	ISR_USARTRX = 0;							// Incoming RX flag
-	if(RXBufferAmount >= RXBufferSize){
-		setError(USART_RX_BUFFER_FULL);
-	}else{
-		if((RXBufferOutPos+RXBufferAmount) < RXBufferSize){
-			RXData[RXBufferOutPos+RXBufferAmount] = UDR0;	// Transfer register value to RX Buffer
-		}else{
-			RXData[(RXBufferOutPos+RXBufferAmount)-RXBufferSize] = UDR0;		// Transfer register value to RX Buffer
-		}
-		RXBufferAmount ++;						// Increment element counter
-	}
+	ISR_USARTRX = 1;							//
 }
 ISR(USART_UDRE_vect){							// USART Data Register Empty
-	ISR_USARTUDRE = 0;
+	ISR_USARTUDRE = 1;							//
 }
 ISR(USART_TX_vect){								// USART TX Complete
-	ISR_USARTTX = 0;
+	ISR_USARTTX = 0;							//
 }
 ISR(ADC_vect){									// ADC Conversion Complete
-	result_ADC = ADC;
-	ISR_ADC = 1;
+	ISR_ADC = 1;								// 
 }
 ISR(EE_READY_vect){								// EEPROM Ready
 	ISR_EEREADY = 0;
