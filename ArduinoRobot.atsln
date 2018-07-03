@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Atmel Studio Solution File, Format Version 11.00
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Robot", "ArduinoRobot\Robot.cproj", "{DCE6C7E3-EE26-4D79-826B-08594B9AD897}"
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "MainController", "ArduinoRobot\MainController.cproj", "{DCE6C7E3-EE26-4D79-826B-08594B9AD897}"
+EndProject
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "MotorController", "MotorController\MotorController.cproj", "{D42DB168-12AA-4716-A00B-A767F911577E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Debug|AVR.Build.0 = Debug|AVR
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|AVR.ActiveCfg = Release|AVR
 		{DCE6C7E3-EE26-4D79-826B-08594B9AD897}.Release|AVR.Build.0 = Release|AVR
+		{D42DB168-12AA-4716-A00B-A767F911577E}.Debug|AVR.ActiveCfg = Debug|AVR
+		{D42DB168-12AA-4716-A00B-A767F911577E}.Debug|AVR.Build.0 = Debug|AVR
+		{D42DB168-12AA-4716-A00B-A767F911577E}.Release|AVR.ActiveCfg = Release|AVR
+		{D42DB168-12AA-4716-A00B-A767F911577E}.Release|AVR.Build.0 = Release|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
