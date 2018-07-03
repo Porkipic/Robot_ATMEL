@@ -799,5 +799,5 @@ END GROUP
 
 .debug_macro
  *(.debug_macro)
-OUTPUT(Robot.elf elf32-avr)
+OUTPUT(MainController.elf elf32-avr)
 LOAD linker stubs
