@@ -1,6 +1,28 @@
 ////////////////////////////// DEFINITIONS ////////////////////////////////////////
 #define F_CPU							16000000UL	// Define CPU speed
 
+#define ADC_PRESCALER					0b111		// Define ADC prescaler value (50kHz < sampling frequency < 200kHz)
+
+#define USART_BAUDRATE					19200		// USART baudrate
+#define UBRR							((F_CPU/100)/(16*(USART_BAUDRATE/100)))-1
+#define USART_BUFFER_SIZE				8
+
+#define MSB_FIRST						0			// Used for SPI data order
+#define LSB_FIRST						1			// Used for SPI data order
+#define MASTER							1			// Used for SPI mode selection
+#define SLAVE							0			// Used for SPI mode selection
+#define SPI_Fosc2						2			// Used for SPI speed selection
+#define SPI_Fosc4						4			// Used for SPI speed selection
+#define SPI_Fosc8						8			// Used for SPI speed selection
+#define SPI_Fosc16						16			// Used for SPI speed selection
+#define SPI_Fosc32						32			// Used for SPI speed selection
+#define SPI_Fosc64						64			// Used for SPI speed selection
+#define SPI_Fosc128						128			// Used for SPI speed selection
+#define SS								16			// SPI SS
+#define MOSI							17			// SPI MOSI
+#define MISO							18			// SPI MISO
+#define SCK								19			// SPI SCK
+
 #define OUTPUT							1			// Used for setPin()
 #define INPUT							0			// Used for setPin()
 #define HIGH							1			// Used for setPin()
@@ -8,33 +30,53 @@
 #define PULLUP							1			// Used for setPin()
 #define NO_PULLUP						0			// Used for setPin()
 
-#define CURRENT_ID						0			// Used for initialization(). IDs 0 to 5 reserved for ADC (channel set based on ID)
-#define TEMP_HB_ID						1			// Used for initialization(). IDs 0 to 5 reserved for ADC (channel set based on ID)
-#define TEMP_MOTOR_ID					2			// Used for initialization(). IDs 0 to 5 reserved for ADC (channel set based on ID)
-#define PID_ID							7			// Used for initialization()
-#define ENCODER_ID						8			// Used for initialization()
-#define HB_DRIVER_ID					9			// Used for initialization()
-#define FAN_ID							10			// Used for initialization()
-#define ERROR_ID						11			// Used for initialization()
-#define TIMER_ID						12			// Used for initialization()
-#define DRIVETRAIN_ID					13			// Used for initialization()
-#define START_ADC_ID					252			// Used for startADC()
-#define ADC_PRESCALER_ID				253			// Used for calculateADCPrescaler()
-#define INITIALIZATION_ID				254			// Used for initialization()
-#define ALL								255			// Used for initialization(). ID 255 reserved for initialization of ALL structures/services
+//********** Structures IDs definitions **********
+#define CURRENT_structID				0			// Used for initialization(). IDs 0 to 5 reserved for ADC (channel set based on ID)
+#define TEMP_HBA_structID				1			// Used for initialization(). IDs 0 to 5 reserved for ADC (channel set based on ID)
+#define TEMP_MOTOR_structID				2			// Used for initialization(). IDs 0 to 5 reserved for ADC (channel set based on ID)
+#define TEMP_HBB_structID				3			// Used for initialization(). IDs 0 to 5 reserved for ADC (channel set based on ID)
+#define USART_structID					6			// Used for initialization()
+#define PID_structID					7			// Used for initialization()
+#define ENCODER_structID				8			// Used for initialization()
+#define HB_DRIVER_structID				9			// Used for initialization()
+#define FAN_structID					10			// Used for initialization()
+#define ERROR_structID					11			// Used for initialization()
+#define TIMER_structID					12			// Used for initialization()
+#define DRIVETRAIN_structID				13			// Used for initialization()
+#define RX_RING_BUFFER_structID			14			// Used for initialization()
+#define TX_RING_BUFFER_structID			15			// Used for initialization()
+#define SPI_structID					16			// Used for initialization()
+//********************
 
-#define ERROR_INITIALIZATION			0			// initialzation()			Error during global initalization()
-#define ERROR_ADC_PRESCALER				1			// calculateADCPrescaler()	No ADC prescaler within sampling speed (50kHz to 200kHz)
-#define ERROR_ADC_BUSY					2			// startADC()				ADC started beore previous result has been read
-#define ERROR_INVALID_ADC_CHANNEL		3			// startADC()				ADC channel is invalid (channel can be betzeen 0 and 5)
+//********** Functions ID definitions **********
+#define ALL								255			// Used for initialization(). ID 255 reserved for initialization of ALL structures/services
+#define INITIALIZATION_funcID			254			// Used for initialization()
+#define ADC_PRESCALER_funcID			253			// Used for calculateADCPrescaler()
+#define START_ADC_funcID				252			// Used for adcStart()
+#define USART_SEND_funcID				251			// Used for addTXRingBuffer()
+#define USART_CYCLE_TX_funcID			250			// Used for cycleTXRingBuffer()
+#define USART_CYCLE_RX_funcID			249			// Used for usartCycleRX()
+#define USART_RECEIVE_funcID			248			// Used for usartReceive()
+#define SPI_INIT_funcID					247			// Used for spiINIT()
+//********************
+
+//********** Error messages **********
+#define ERROR_INITIALIZATION			0			// initialzation()			Error during initalization() for ALL structures
+#define ERROR_ADC_BUSY					2			// adcStart()				ADC started before previous result has been read
+#define ERROR_INVALID_ADC_CHANNEL		3			// adcStart()				ADC channel is invalid (channel can be betzeen 0 and 5)
+#define ERROR_TX_BUFFER_FULL			4			// addTXRingBuffer()				USART TX buffer is full
+#define ERROR_TX_BUSY					5			// cycleTXRingBuffer()			USART TX buffer is alreday in use
+#define ERROR_RX_BUFFER_FULL			6			// cycleTXRingBuffer()			USART RX buffer is full
+#define ERROR_RX_BUFFER_EMPTY			7			// usartReceive()			USART RX buffer is empty
+#define ERROR_SPI_INVALID_MODE			8			// spiINIT()				SPI mode in invalide (See Master/Slave definitions)
+#define ERROR_SPI_DATA_MODE				9			// spiINIT()				SPI data mode invalid (0, 1, 2, 3 available)
+#define ERROR_SPI_SPEED					10			// spiINIT()				SPI speed invalid (See "SPI_Fosc" definitions)
+#define ERROR_SPI_INVALID_DATA_ORDER	11			// spiINIT()				SPI data order invalid (See MSB/LSB definitions)
+//********************
 
 #define RESET							1			// RESET pin
 #define CAN_INTERRUPT					6			// MCP2515 CAN Interrupt
 #define CHIP_SELECT						15			// SPI Chip Select
-#define SS								16			// SPI SS
-#define MOSI							17			// SPI MOSI
-#define MISO							18			// SPI MISO
-#define SCK								19			// SPI SCK
 ////////////////////////////// END DEFINITIONS ////////////////////////////////////
 
 ////////////////////////////// INCLUDES ///////////////////////////////////////////
@@ -86,15 +128,16 @@ struct Timer *timerPTR = &timer;
 
 struct ADConverter{
 	uint8_t id;
-	uint8_t prescaler;
 	uint8_t channel;
 	uint16_t result;
 	uint8_t pin;
 };
 struct ADConverter current;
 struct ADConverter *currentPTR = &current;
-struct ADConverter tempHBridge;
-struct ADConverter *tempHBridgePTR = &tempHBridge;
+struct ADConverter tempHBridgeA;
+struct ADConverter *tempHBridgeAPTR = &tempHBridgeA;
+struct ADConverter tempHBridgeB;
+struct ADConverter *tempHBridgeBPTR = &tempHBridgeB;
 struct ADConverter tempMotor;
 struct ADConverter *tempMotorPTR = &tempMotor;
 
@@ -170,6 +213,37 @@ struct Error{
 };
 struct Error errorSignal;
 struct Error *errorSignalPTR = &errorSignal;
+
+struct RingBuffer{
+	uint8_t id;
+	uint8_t data[USART_BUFFER_SIZE];				// Array holding USART data
+	uint8_t inputPosition;							// Position for the data going IN the buffer
+	uint8_t outputPosition;							// Position for the data going OUT the buffer
+	volatile uint8_t dataAmount;					// Number of elements in the buffer	
+};
+struct RingBuffer rxBuffer;
+struct RingBuffer txBuffer;
+
+struct USART{
+	uint8_t id;
+	uint16_t baudrate;
+	struct RingBuffer *rxBufferPTR;
+	struct RingBuffer *txBufferPTR;
+};
+struct USART usart;
+struct USART *usartPTR = &usart;
+
+struct SPI{
+	uint8_t id;
+	uint8_t dataOrder;
+	uint8_t spiMode;
+	uint8_t dataMode;
+	uint8_t speed;
+	struct RingBuffer *rxBufferPTR;
+	struct RingBuffer *txBufferPTR;
+};
+struct SPI spi;
+struct SPI *spiPTR = &spi;
 ////////////////////////////// END STRUCTURES /////////////////////////////////////
 
 ////////////////////////////// CONSTANTS DECLARATION //////////////////////////////
@@ -177,7 +251,7 @@ struct Error *errorSignalPTR = &errorSignal;
 ////////////////////////////// END CONSTANTS DECLARATION //////////////////////////
 
 ////////////////////////////// VARIABLES DECLARATION //////////////////////////////
-struct ADConverter *channelInUsePTR = NULL;
+struct ADConverter *channelInUsePTR = 0;
 ////////////////////////////// END VARIABLES DECLARATION //////////////////////////
 
 ////////////////////////////// FUNCTIONS DECLARATION //////////////////////////////
@@ -190,6 +264,8 @@ void encoderINIT (struct Encoder *pointer, uint8_t id);
 void hbDriverINIT (struct HBRidgeDriver *pointer, uint8_t id);
 void fanINIT (struct Fan *pointer, uint8_t id);
 void errorINIT (struct Error *pointer, uint8_t id);
+void usartINIT(struct USART *pointer, uint8_t id);
+void spiINIT(struct SPI *pointer, uint8_t dataOrder, uint8_t spiMode, uint8_t dataMode, uint8_t speed, uint8_t id);
 
 void setPin(uint8_t pin, uint8_t direction, uint8_t option);
 
@@ -198,7 +274,15 @@ void clearError(struct Error *pointer);
 
 void calculateFrequency(struct Encoder *pointer, struct Timer *timer);
 uint8_t speedFromFrequency(struct Encoder *encoder, struct Drivetrain *drivetrain);
-uint8_t calculateADCPrescaler(struct ADConverter *ADConverter);
+
+void adcStart(struct ADConverter *adconverter);
+void adcPoll(struct ADConverter *adconverter);
+
+void addTXRingBuffer(struct USART *usart, uint8_t data);
+void cycleTXRingBuffer(struct USART *usart);
+uint8_t retrieveRXRingBuffer(struct USART *usart);
+void cycleTXRingBuffer(struct USART *usart);
+void cycleRXRingBuffer(struct USART *usart)
 ////////////////////////////// END FUNCTIONS DECLARATION //////////////////////////
 
 int main(void){
@@ -220,7 +304,8 @@ int main(void){
 	//********************
 
 	//********** Services Initialization **********
-	//initTimer();									// Mandatory service
+	//initTimer();									// Initialize time keeping timer
+	//
 	//********************
 	
 	//********** Global interrupts **********
@@ -229,10 +314,23 @@ int main(void){
 ////////////////////////////// END SETUP //////////////////////////////////////////
 	
 	while(1){
-		startADC(currentPTR);
-		calculateFrequency(encoderPTR, timerPTR);
+		adcStart(currentPTR);
+		addTXRingBuffer(usartPTR->txBufferPTR, (channelInUsePTR->result)>>8);
+		//calculateFrequency(encoderPTR, timerPTR);
+		
 		//********** ISR flags polling **********
-		pollADC(channelInUsePTR);
+		if(ISR_SPI){
+			
+		}
+		if(ISR_USARTRX){
+			cycleTXRingBuffer(usartPTR->txBufferPTR);	// Transmit data in TX buffer
+		}
+		if(ISR_USARTRX){
+			cycleRXRingBuffer(usartPTR->rxBufferPTR);	// Store data in RX buffer
+		}
+		if(ISR_ADC){
+			adcPoll(channelInUsePTR);					// Check if a new AD conversion is available
+		}
 		//********************
 		
 	}
@@ -241,51 +339,63 @@ int main(void){
 ////////////////////////////// FUNCTIONS DEFINITIONS //////////////////////////////
 void initialization(uint8_t id){
 	switch (id){
-		case CURRENT_ID:
-			ADConverterINIT(currentPTR, CURRENT_ID);
+		case CURRENT_structID:
+			ADConverterINIT(currentPTR, CURRENT_structID);
 			break;
-		case TEMP_HB_ID:
-			ADConverterINIT(tempHBridgePTR, TEMP_HB_ID);
+		case TEMP_HBA_structID:
+			ADConverterINIT(tempHBridgeAPTR, TEMP_HBA_structID);
 			break;
-		case TEMP_MOTOR_ID:
-			ADConverterINIT(tempMotorPTR, TEMP_MOTOR_ID);
+		case TEMP_HBB_structID:
+			ADConverterINIT(tempHBridgeBPTR, TEMP_HBB_structID);
 			break;
-		case TIMER_ID:
-			timerINIT(timerPTR, TIMER_ID);
+		case TEMP_MOTOR_structID:
+			ADConverterINIT(tempMotorPTR, TEMP_MOTOR_structID);
 			break;
-		case DRIVETRAIN_ID:
-			drivetrainINIT(drivetrainPTR, DRIVETRAIN_ID);
+		case TIMER_structID:
+			timerINIT(timerPTR, TIMER_structID);
 			break;
-		case PID_ID:
-			pidINIT(pidPTR, PID_ID);
+		case DRIVETRAIN_structID:
+			drivetrainINIT(drivetrainPTR, DRIVETRAIN_structID);
 			break;
-		case ENCODER_ID:
-			encoderINIT(encoderPTR, ENCODER_ID);
+		case PID_structID:
+			pidINIT(pidPTR, PID_structID);
 			break;
-		case HB_DRIVER_ID:
-			hbDriverINIT(hbDriverPTR, HB_DRIVER_ID);
+		case ENCODER_structID:
+			encoderINIT(encoderPTR, ENCODER_structID);
 			break;
-		case FAN_ID:
-			fanINIT(fanPTR, FAN_ID);
+		case HB_DRIVER_structID:
+			hbDriverINIT(hbDriverPTR, HB_DRIVER_structID);
 			break;
-		case ERROR_ID:
-			errorINIT(errorSignalPTR, ERROR_ID);
+		case FAN_structID:
+			fanINIT(fanPTR, FAN_structID);
+			break;
+		case ERROR_structID:
+			errorINIT(errorSignalPTR, ERROR_structID);
+			break;
+		case USART_structID:
+			usartINIT(usartPTR, USART_structID);
+			break;
+		case SPI_structID:
+			spiINIT(spiPTR, MSB_FIRST, MASTER, 0, 128, SPI_structID);
 			break;
 		case ALL:
-			ADConverterINIT(currentPTR, CURRENT_ID);
-			ADConverterINIT(tempHBridgePTR, TEMP_HB_ID);
-			ADConverterINIT(tempMotorPTR, TEMP_MOTOR_ID);
-			timerINIT(timerPTR, TIMER_ID);
-			drivetrainINIT(drivetrainPTR, DRIVETRAIN_ID);
-			pidINIT(pidPTR, PID_ID);
-			encoderINIT(encoderPTR, ENCODER_ID);
-			hbDriverINIT(hbDriverPTR, HB_DRIVER_ID);
-			fanINIT(fanPTR, FAN_ID);
-			errorINIT(errorSignalPTR, ERROR_ID);
+			ADConverterINIT(currentPTR, CURRENT_structID);
+			ADConverterINIT(tempHBridgeAPTR, TEMP_HBA_structID);
+			ADConverterINIT(tempHBridgeBPTR, TEMP_HBB_structID);
+			ADConverterINIT(tempMotorPTR, TEMP_MOTOR_structID);
+			timerINIT(timerPTR, TIMER_structID);
+			drivetrainINIT(drivetrainPTR, DRIVETRAIN_structID);
+			pidINIT(pidPTR, PID_structID);
+			encoderINIT(encoderPTR, ENCODER_structID);
+			hbDriverINIT(hbDriverPTR, HB_DRIVER_structID);
+			fanINIT(fanPTR, FAN_structID);
+			errorINIT(errorSignalPTR, ERROR_structID);
+			usartINIT(usartPTR, USART_structID);
+			spiINIT(spiPTR, MSB_FIRST, MASTER, 0, 128, SPI_structID);
 			break;
 		default:
-			errorINIT(errorSignalPTR, ERROR_ID);
-			setError(errorSignalPTR,ERROR_INITIALIZATION, INITIALIZATION_ID);
+			errorINIT(errorSignalPTR, ERROR_structID);
+			setError(errorSignalPTR,ERROR_INITIALIZATION, INITIALIZATION_funcID);
 			break;
 	}	
 }
@@ -302,17 +412,16 @@ void timerINIT(struct Timer *pointer, uint8_t id){
 void ADConverterINIT(struct ADConverter *pointer, uint8_t id){
 	pointer->id = id;
 	pointer->channel = id;
-	pointer->prescaler = 0;
 	pointer->result = 0;
 	pointer->pin = id+23;
-	setPin(pointer->pin, INPUT, NO_PULLUP);
 	ISR_ADC = 0;											// Reset to allow new conversion after initialization
 	ADCSRA |= (1 << ADEN);									// Enable ADC
 	ADCSRA |= (0 << ADSC);									// No start conversion
 	ADCSRA |= (0 << ADATE);									// No auto-trigger
 	ADCSRA |= (1 << ADIF);									// Clear ADC interrupt
 	ADCSRA |= (1 << ADIE);									// Enable ADC interrupts
-	ADCSRA |= (calculateADCPrescaler(pointer) << ADPS0);			// Set ADC prescaler (ADC sampling speed between 50kHz and 200kHz)
+	ADCSRA |= (ADC_PRESCALER << ADPS0);						// Set ADC prescaler (ADC sampling speed between 50kHz and 200kHz)
+	setPin(pointer->pin, INPUT, NO_PULLUP);
 }
 void drivetrainINIT (struct Drivetrain *pointer, uint8_t id){
 	pointer->id = id;
@@ -362,6 +471,124 @@ void errorINIT (struct Error *pointer, uint8_t id){
 	pointer->pin = 26;
 	pointer->sourceID = 0;
 	setPin(pointer->pin, OUTPUT, LOW);
+}
+void usartINIT(struct USART *pointer, uint8_t id){
+	pointer->id = id;
+	pointer->baudrate = USART_BAUDRATE;
+	pointer->rxBufferPTR = &rxBuffer;
+	pointer->txBufferPTR = &txBuffer;
+	ringBufferINIT(pointer->rxBufferPTR, RX_RING_BUFFER_structID);
+	ringBufferINIT(pointer->txBufferPTR, TX_RING_BUFFER_structID);
+	UBRR0 = UBRR;									// Set baud rate according to compiler calculation
+	UCSR0B = (1<<RXCIE0) | (1<<TXCIE0) | (0<<UDRIE0) | (1<<RXEN0) | (1<<TXEN0) | (0<<UCSZ02);					// Enable USART interrupts
+	UCSR0C = (0<<UMSEL01) | (0<<UMSEL01);
+	UCSR0C |= (0<<UPM01) | (0<<UPM00);				// Asynchronous
+	UCSR0C |= (1<<USBS0);							// No Parity
+	UCSR0C |= (1<<UCSZ01) | (1<<UCSZ00);			// 8 Data bits
+	setPin(2, INPUT, NO_PULLUP);					// Set RX pin as input
+	setPin(3, OUTPUT, LOW);							// Set TX pin as output
+}
+void ringBufferINIT(struct RingBuffer *pointer, uint8_t id){
+	pointer->id = RX_RING_BUFFER_structID;
+	pointer->dataAmount = 0;
+	pointer->inputPosition = 0;
+	pointer->outputPosition = 0;
+}
+void spiINIT(struct SPI *pointer, uint8_t dataOrder, uint8_t spiMode, uint8_t dataMode, uint8_t speed, uint8_t id){
+	pointer->id = id;
+	switch(dataOrder){
+		case 0:
+			SPCR &= (dataOrder<<DORD);				// Data Order
+			pointer->dataOrder = dataOrder;
+			break;
+		case 1:
+			SPCR |= (dataOrder<<DORD);				// Data Order
+			pointer->dataOrder = dataOrder;
+			break;
+		default:
+			setError(errorSignalPTR, ERROR_SPI_INVALID_DATA_ORDER, SPI_INIT_funcID);
+			break;
+	}
+	switch(spiMode){
+		case 0:
+			SPCR &= (spiMode<<MSTR);				// SPI Mode Slave
+			pointer->spiMode = spiMode;
+			setPin(MISO, OUTPUT, LOW);				// Set Output Low
+			break;
+		case 1:
+			SPCR |= (spiMode<<MSTR);				// SPI Mode Master
+			pointer->spiMode = spiMode;
+			setPin(MOSI, OUTPUT, LOW);				// Set Output Low
+			setPin(SCK, OUTPUT, LOW);				// Set Clock Low
+			setPin(SS, INPUT, NO_PULLUP);			// Set SS as tri-state input. If pulled LOW, will disable Master Mode.
+			break;
+		default:
+			setError(errorSignalPTR, ERROR_SPI_INVALID_MODE, SPI_INIT_funcID);
+			break;
+	}
+	switch (dataMode){								// Set clock Polarity and Phase
+		case 0:										//
+			SPCR &= (0<<CPOL) & (0<<CPHA);			//
+			pointer->dataMode = 0;					//
+			break;									//
+		case 1:										//
+			SPCR &= (0<<CPOL) | (1<<CPHA);			//
+			pointer->dataMode = 1;					//
+			break;									//
+		case 2:										//
+			SPCR |= (1<<CPOL) & (0<<CPHA);			//
+			pointer->dataMode = 2;					//
+			break;									//
+		case 3:										//
+			SPCR |= (1<<CPOL) | (1<<CPHA);			//
+			pointer->dataMode = 3;					//
+			break;									//
+		default:									//
+			setError(errorSignalPTR, ERROR_SPI_DATA_MODE, SPI_INIT_funcID);
+			break;									//
+	}
+	switch (speed){									// Set clock Polarity and Phase
+		case 2:										//
+			SPCR &= (0<<SPR1) & (0<<SPR0);			// F_CPU/2
+			SPSR |= (1<<SPI2X);						// SPI double speed
+			pointer->speed = speed;					//
+		break;										//
+		case 4:										//
+			SPCR &= (0<<SPR1)  & (0<<SPR0);			// F_CPU/4
+			SPSR &= (0<<SPI2X);						// No SPI double speed
+			pointer->speed = speed;					//
+		break;										//
+		case 8:										//
+			SPCR &= (0<<SPR1) | (1<<SPR0);			// F_CPU/8
+			SPSR |= (1<<SPI2X);						// SPI double speed
+			pointer->speed = speed;					//
+		break;										//
+		case 16:									//
+			SPCR &= (0<<SPR1) | (1<<SPR0);			// F_CPU/16
+			SPSR &= (0<<SPI2X);						// No SPI double speed
+			pointer->speed = speed;					//
+		break;										//
+		case 32:									//
+			SPCR |= (1<<SPR1) & (0<<SPR0);			// F_CPU/32
+			SPSR |= (1<<SPI2X);						// SPI double speed
+			pointer->speed = speed;					//
+		break;										//
+		case 64:									//
+			SPCR |= (1<<SPR1) & (0<<SPR0);			// F_CPU/64
+			SPSR &= (0<<SPI2X);						// No SPI double speed
+			pointer->speed = speed;					//
+		break;										//
+		case 128:									//
+			SPCR |= (1<<SPR1)  | (1<<SPR0);			// F_CPU/128
+			SPSR &= (0<<SPI2X);						// No SPI double speed
+			pointer->speed = speed;					//
+		break;										//
+		default:									//
+			setError(errorSignalPTR, ERROR_SPI_SPEED, SPI_INIT_funcID);
+		break;										//
+	}
+	SPCR |= (1<<SPIE);								// Enable SPI interrupts
+	SPCR |= (1<<SPE);								// Enable SPI
 }
 
 void setPin(uint8_t pin, uint8_t direction, uint8_t option){
@@ -414,62 +641,81 @@ uint8_t speedFromFrequency(struct Encoder *encoder, struct Drivetrain *drivetrai
 	speed = ((((encoder->ppm)/2)*(drivetrain->LinearRatio))*36)/100;
 	return speed;
 }
-uint8_t calculateADCPrescaler(struct ADConverter *ADConverter){
-	uint8_t frequencyDivider = 2;
-	uint8_t samplingFrequency = 0;
-	uint8_t prescaler = 0;
-	while (samplingFrequency<50 || samplingFrequency>200){
-		samplingFrequency = (F_CPU/1000)/frequencyDivider;
-		frequencyDivider &= frequencyDivider<<2;
-	}
-	ADConverter->prescaler = frequencyDivider;
-	switch(frequencyDivider){
-		case 2:
-			prescaler = 0b001;
-			break;
-		case 4:
-			prescaler = 0b010;
-			break;
-		case 8:
-			prescaler = 0b011;
-			break;
-		case 16:
-			prescaler = 0b100;
-			break;
-		case 32:
-			prescaler = 0b101;
-			break;
-		case 64:
-			prescaler = 0b110;
-			break;
-		case 128:
-			prescaler = 0b111;
-			break;
-		default:
-			setError(errorSignalPTR, ERROR_ADC_PRESCALER, ADC_PRESCALER_ID);
-	}
-	return prescaler;
-}
-void startADC(struct ADConverter *ADConverter){
+
+void adcStart(struct ADConverter *ADConverter){
 	if(ISR_ADC){
-		setError(errorSignalPTR, ERROR_ADC_BUSY, START_ADC_ID);
+		setError(errorSignalPTR, ERROR_ADC_BUSY, START_ADC_funcID);
 	}else{
 		if (ADConverter->channel<5){
-			channelInUsePTR = *ADConverter;
+			channelInUsePTR = ADConverter;							// Set channel in use to address of ADConverter
 			ADMUX |= (1<<REFS1) | (0<<REFS0);						// Set voltage reference to VCC
 			ADMUX |= (1<<ADLAR);									// Result left-justified (8 MSB on ADCH and 2 LSB on ADCL)
 			ADMUX |= (ADConverter->channel << MUX0);				// Set ADC channel as requested
 			ADCSRA |= (1 << ADSC);									// Start conversion
 		}else{
-			setError(errorSignalPTR, ERROR_INVALID_ADC_CHANNEL, START_ADC_ID);
+			setError(errorSignalPTR, ERROR_INVALID_ADC_CHANNEL, START_ADC_funcID);
 		}
 	}
 }
-void pollADC(struct ADConverter *ADConverter){
+void adcPoll(struct ADConverter *ADConverter){
 	if(ISR_ADC){
-		ADConverter->result = ADC>>6;
-		*ADConverter = NULL;
+		ADConverter->result = ADC;
 		ISR_ADC = 0;
+	}
+}
+
+void addTXRingBuffer(struct RingBuffer *pointer, uint8_t data){
+	if(pointer->dataAmount<USART_BUFFER_SIZE){				// Check if TXBuffer is full
+		pointer->data[pointer->inputPosition] = data;		// Put Data in buffer
+		pointer->dataAmount ++;								// Increment elements count in TX buffer
+		if(pointer->inputPosition<(USART_BUFFER_SIZE-1)){	// Check if end of buffer
+			pointer->inputPosition ++;						// Append at the end of buffer
+		}else{												//
+			pointer->inputPosition = 0;						// Back to beginning of buffer
+		}
+	}else{
+		setError(errorSignalPTR, ERROR_TX_BUFFER_FULL, USART_SEND_funcID);	// Set error if buffer is full
+	}
+}
+void cycleTXRingBuffer(struct RingBuffer *pointer){
+	if(ISR_USARTTX && pointer->dataAmount>0){				// Check if previous TX is finished
+		ISR_USARTTX = 0;									// Flag pending TX
+		UDR0 = pointer->data[pointer->outputPosition];		// Put TX data in UDR register
+		if(pointer->outputPosition<(USART_BUFFER_SIZE-1)){	// Check if end of buffer
+			pointer->outputPosition ++;						// Append at the end of buffer
+		}else{												//
+			pointer->outputPosition = 0;					// Back to start of buffer
+		}
+	}else{
+		setError(errorSignalPTR, ERROR_TX_BUSY, USART_CYCLE_TX_funcID);
+	}
+}
+uint8_t retrieveRXRingBuffer(struct USART *usart){
+	uint8_t result = 0;															// Initialize result
+	if(usart->rxBufferPTR->dataAmount>0){										// Check if unread data are in the RX buffer
+		result = usart->rxBufferPTR->data[usart->rxBufferPTR->outputPosition];	// Get Data from the buffer
+		if(usart->rxBufferPTR->outputPosition<(USART_BUFFER_SIZE-1)){			// Check if end of buffer
+			usart->rxBufferPTR->outputPosition ++;								// Increment RX output position
+		}else{																	//
+			usart->rxBufferPTR->outputPosition = 0;								// Back to start of buffer
+		}
+		usart->rxBufferPTR->outputPosition--;									// Decrement number of elements in the buffer
+	}else{
+		setError(errorSignalPTR, ERROR_RX_BUFFER_EMPTY, USART_RECEIVE_funcID);
+	}
+	return result;
+}
+void cycleRXRingBuffer(struct RingBuffer *pointer){
+	if(pointer->dataAmount<USART_BUFFER_SIZE){				// Check if RX buffer is not full
+		pointer->data[pointer->inputPosition] = UDR0;		// Add data to RX buffer
+		if(pointer->inputPosition<(USART_BUFFER_SIZE-1)){	// Check if end of buffer
+			pointer->inputPosition ++;						// Increment RX input position
+		}else{												//
+			pointer->inputPosition  = 0;					// Back to beginning of buffer
+		}
+		ISR_USARTRX = 0;									// Flag new data can be received
+	}else{
+		setError(errorSignalPTR, ERROR_RX_BUFFER_FULL, USART_CYCLE_RX_funcID);
 	}
 }
 ////////////////////////////// END FUNCTIONS DEFINITIONS //////////////////////////
@@ -524,16 +770,18 @@ ISR(TIMER0_OVF_vect){								// Timer/Counter 0 Overflow
 	ISR_TMR0OVF = 0;
 }
 ISR(SPI_STC_vect){									// SPI Serial Transfer Complete
-	ISR_SPI = 0;
+	ISR_SPI = 1;
 }
 ISR(USART_RX_vect){									// USART RX Complete
-	ISR_USARTRX = 0;
+	ISR_USARTRX = 1;								// Flag complete incoming RX
+	usartPTR->rxBufferPTR->dataAmount++;			// Increase element count in RX buffer
 }
 ISR(USART_UDRE_vect){								// USART Data Register Empty
-	ISR_USARTUDRE = 0;
+	ISR_USARTUDRE = 1;
 }
 ISR(USART_TX_vect){									// USART TX Complete
-	ISR_USARTTX = 0;
+	ISR_USARTTX = 1;								// Flag complete TX
+	usartPTR->txBufferPTR->dataAmount++;			// Increase element count in RX buffer
 }
 ISR(ADC_vect){										// ADC Conversion Complete
 	ISR_ADC = 1;									

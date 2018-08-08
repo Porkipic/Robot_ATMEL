@@ -7,6 +7,16 @@ Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "MainController", "ArduinoRo
 EndProject
 Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "MotorController", "MotorController\MotorController.cproj", "{D42DB168-12AA-4716-A00B-A767F911577E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{A3FE185F-A571-4791-B133-EDCD7F4D5F99}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ADC", "ADC", "{2958B9B7-0051-4B05-91B0-6902F8B3F73C}"
+	ProjectSection(SolutionItems) = preProject
+		ADC.cpp = ADC.cpp
+		ADC.h = ADC.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{81A39506-A86C-4111-8750-17E569547370}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AVR = Debug|AVR
@@ -24,5 +34,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2958B9B7-0051-4B05-91B0-6902F8B3F73C} = {A3FE185F-A571-4791-B133-EDCD7F4D5F99}
+		{81A39506-A86C-4111-8750-17E569547370} = {A3FE185F-A571-4791-B133-EDCD7F4D5F99}
 	EndGlobalSection
 EndGlobal
